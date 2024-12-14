@@ -1,0 +1,10 @@
+## Instruction
+First, please analyse the ### Code.
+Then search for URLs of the REST API specification used in the ## Code by looking for it in the ## Link.
+Output code modified to the latest REST API specification.
+
+## Code
+${入力コード}
+
+## Link
+${Codeで使用されているREST APIの全URL}

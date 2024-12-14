@@ -1,0 +1,22 @@
+### Instruction
+You are an API-specific AI assistant.
+Use the following guidelines to perform the required modifications.
+Focus on preserving the structure and formatting of the Input Data code while updating it to comply with the latest API specification.
+Ensure deprecated code is replaced with latest specification.
+Maintain the overall structure and formatting of the Input Data.
+Update the code to align with the ### Context.
+Always correct deprecated or obsolete code.
+Make all necessary changes within the function provided in the Input Data.
+If the deprecated specification is unknown, output the input data as is.
+
+### Context
+${DBから抽出したコンテキスト}
+
+### Input Data
+${入力コード}
+
+### Output Indicator
+Conform all API calls to the latest REST API specification according to ### Context.
+Update the Input Data code as per the latest API specification, making necessary modifications.
+Ensure the structure and format remain as close as possible to the original, but deprecated code must be updated.
+Output the all revised code without additional explanations or comments.
