@@ -1,0 +1,50 @@
+---------------User Query---------------
+key <- '<edited>'
+secret <- '<edited>'
+tokenURL <- 'http://api.fitbit.com/oauth/request_token'
+accessTokenURL <- 'http://api.fitbit.com/oauth/access_token'
+authorizeURL <- 'https://www.fitbit.com/oauth/authorize'
+
+fbr <- oauth_app('fitbitR',key,secret)
+fitbit <- oauth_endpoint(tokenURL,authorizeURL,accessTokenURL)
+
+token <- oauth1.0_token(fitbit,fbr)
+sig <- sign_oauth1.0(fbr,
+    token=token$oauth_token,
+    token_secret=token$oauth_token_secret
+)
+
+dta <- GET("http://api.fitbit.com/1/user/-/activities/steps/date/2012-08-01/1m.json",sig)
+# this will fail unless using curlPercentEncode
+---------------Response---------------
+library(httr)
+
+client_id <- '<edited>'
+client_secret <- '<edited>'
+token_url <- 'https://api.fitbit.com/oauth2/token'
+authorize_url <- 'https://www.fitbit.com/oauth2/authorize'
+base_api_url <- 'https://api.fitbit.com/1/'
+
+# OAuth2 Token Retrieval
+token <- POST(
+    url = token_url,
+    authenticate(client_id, client_secret),
+    body = list(
+        grant_type = "client_credentials"
+    ),
+    encode = "form"
+)
+
+access_token <- content(token)$access_token
+
+# Make a request for activity timeseries data
+headers <- add_headers(
+    Authorization = paste("Bearer", access_token)
+)
+
+response <- GET(
+    url = paste0(base_api_url, "activities/steps/date/2022-01-01/1m.json"),
+    headers
+)
+
+print(content(response, "parsed"))

@@ -1,0 +1,43 @@
+---------------User Query---------------
+    [Route("fitbit")]
+    public ActionResult Authorize()
+    {
+
+        //make sure you've set these up in Web.Config under <appSettings>:
+        string ConsumerKey = ConfigurationManager.AppSettings["FitbitConsumerKey"];
+        string ConsumerSecret = ConfigurationManager.AppSettings["FitbitConsumerSecret"];
+
+
+        Fitbit.Api.Authenticator authenticator = new Fitbit.Api.Authenticator(ConsumerKey,
+                                                                                ConsumerSecret,
+                                                                                "http://api.fitbit.com/oauth/request_token",
+                                                                                "http://api.fitbit.com/oauth/access_token",
+                                                                                "http://api.fitbit.com/oauth/authorize");
+        RequestToken token = authenticator.GetRequestToken();
+        Session.Add("FitbitRequestTokenSecret", token.Secret.ToString()); //store this somehow, like in Session as we'll need it after the Callback() action
+
+        //note: at this point the RequestToken object only has the Token and Secret properties supplied. Verifier happens later.
+
+        string authUrl = authenticator.GenerateAuthUrlFromRequestToken(token, true);
+        return Redirect(authUrl);
+    }
+---------------Response---------------
+[Route("fitbit")]
+public ActionResult Authorize()
+{
+    // Make sure you've set these up in Web.Config under <appSettings>:
+    string clientId = ConfigurationManager.AppSettings["FitbitClientId"];
+    string clientSecret = ConfigurationManager.AppSettings["FitbitClientSecret"];
+
+    // OAuth2.0 endpoint URLs
+    string authorizeUrl = "https://www.fitbit.com/oauth2/authorize";
+    string tokenUrl = "https://api.fitbit.com/oauth2/token";
+    string redirectUri = "https://your-callback-url"; // Replace with your actual callback URL
+
+    // Generate authorization URL
+    string state = Guid.NewGuid().ToString("N"); // Generate a unique state value
+    Session["FitbitState"] = state; // Store state in session for validation later
+    string authUrl = $"{authorizeUrl}?response_type=code&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&scope=activity%20nutrition%20profile%20settings%20sleep%20social%20weight&state={state}";
+
+    return Redirect(authUrl);
+}

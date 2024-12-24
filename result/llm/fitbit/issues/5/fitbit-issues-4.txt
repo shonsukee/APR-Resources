@@ -1,0 +1,47 @@
+---------------User Query---------------
+function getFitbitService() {
+	return OAuth1.createService(identifier)
+	// Set the endpoint URLs.
+	.setAccessTokenUrl("https://api.fitbit.com/oauth/access_token")
+	.setRequestTokenUrl("https://api.fitbit.com/oauth/request_token")
+	.setAuthorizationUrl("https://api.fitbit.com/oauth/authorize")
+
+	// Set the consumer key and secret.
+	.setConsumerKey(getConsumerKey())
+	.setConsumerSecret(getConsumerSecret())
+
+	// Set the project key of the script using this library.
+	.setProjectKey(projectKey)
+
+
+	// Set the name of the callback function in the script referenced
+	// above that should be invoked to complete the OAuth flow.
+	.setCallbackFunction('authCallback')
+
+	// Set the property store where authorized tokens should be persisted.
+	.setPropertyStore(PropertiesService.getUserProperties());
+}
+
+---------------Response---------------
+function getFitbitService() {
+	return OAuth2.createService(identifier)
+		// Set the endpoint URLs.
+		.setAuthorizationBaseUrl("https://www.fitbit.com/oauth2/authorize")
+		.setTokenUrl("https://api.fitbit.com/oauth2/token")
+
+		// Set the client ID and secret.
+		.setClientId(getConsumerKey())
+		.setClientSecret(getConsumerSecret())
+
+		// Set the callback URL as per the new OAuth 2.0 flow.
+		.setRedirectUri('https://script.google.com/macros/d/{SCRIPT_ID}/usercallback')
+
+		// Set the property store where authorized tokens should be persisted.
+		.setPropertyStore(PropertiesService.getUserProperties())
+
+		// Set the required scopes.
+		.setScope('activity heartrate sleep profile')
+		
+		// Set the token to be refreshed automatically.
+		.setTokenHeaders({ Authorization: 'Basic ' + Utilities.base64Encode(getConsumerKey() + ':' + getConsumerSecret()) });
+}

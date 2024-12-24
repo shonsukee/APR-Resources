@@ -1,0 +1,44 @@
+---------------User Query---------------
+AFOAuth1Client *oAuthClient = [[AFOAuth1Client alloc] initWithBaseURL:[NSURL URLWithString:@"http://api.fitbit.com/"] key:@"key-removed" secret:@"secret-removed"];
+
+[oAuthClient authorizeUsingOAuthWithRequestTokenPath:@"/oauth/request_token" userAuthorizationPath:@"http://www.fitbit.com/oauth/authorize?display=touch" callbackURL:[NSURL URLWithString:@"bitrockr://fitbit/success"] accessTokenPath:@"/oauth/access_token" accessMethod:@"POST" scope:nil success:^(AFOAuth1Token *accessToken, id responseObject) {
+    NSLog(@"AUTH COMPLETE :: %@", accessToken);
+} failure:^(NSError *error) {
+    NSLog(@"AUTH FAILED");
+}];
+---------------Response---------------
+#import <AFNetworking/AFNetworking.h>
+
+AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://api.fitbit.com/"]];
+manager.responseSerializer = [AFJSONResponseSerializer serializer];
+
+NSDictionary *parameters = @{
+    @"client_id": @"your-client-id",
+    @"response_type": @"code",
+    @"redirect_uri": @"bitrockr://fitbit/success",
+    @"scope": @"activity profile heartrate sleep"
+};
+
+[manager GET:@"oauth2/authorize" parameters:parameters headers:nil progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+    NSLog(@"AUTH INITIATED: %@", responseObject);
+    // Continue to handle response to extract the authorization code and exchange it for access token
+} failure:^(NSURLSessionDataTask *task, NSError *error) {
+    NSLog(@"AUTH FAILED: %@", error.localizedDescription);
+}];
+
+// Token Exchange
+NSDictionary *tokenParameters = @{
+    @"client_id": @"your-client-id",
+    @"client_secret": @"your-client-secret",
+    @"code": @"authorization-code-from-previous-step",
+    @"grant_type": @"authorization_code",
+    @"redirect_uri": @"bitrockr://fitbit/success"
+};
+
+[manager POST:@"oauth2/token" parameters:tokenParameters headers:nil progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+    NSLog(@"TOKEN RECEIVED: %@", responseObject);
+    NSString *accessToken = responseObject[@"access_token"];
+    // Use access token for subsequent API calls
+} failure:^(NSURLSessionDataTask *task, NSError *error) {
+    NSLog(@"TOKEN REQUEST FAILED: %@", error.localizedDescription);
+}];

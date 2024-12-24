@@ -1,0 +1,181 @@
+---------------User Query---------------
+module Switchbot
+	class Client
+	  API_ENDPOINT = 'https://api.switch-bot.com'
+  
+	  def initialize(token)
+		@token = token
+	  end
+  
+	  def devices
+		request(
+		  http_method: :get,
+		  endpoint: 'v1.0/devices'
+		)
+	  end
+
+	  def device(device_id)
+		Device.new(client: self, device_id: device_id)
+	  end
+	  def status(device_id:)
+		request(
+		  http_method: :get,
+		  endpoint: "/v1.0/devices/#{device_id}/status"
+		)
+	  end
+  
+	  def commands(device_id:, command:, parameter: 'default', command_type: 'command')
+		request(
+		  http_method: :post,
+		  endpoint: "/v1.0/devices/#{device_id}/commands",
+		  params: {
+			command: command,
+			parameter: parameter,
+			commandType: command_type
+		  }
+		)
+	  end
+	  def scenes
+		request(
+		  http_method: :get,
+		  endpoint: 'v1.0/scenes'
+		)
+	  end
+
+	  def scene(scene_id)
+		Scene.new(client: self, scene_id: scene_id)
+	  end
+	  def execute(scene_id:)
+		request(
+		  http_method: :post,
+		  endpoint: "/v1.0/scenes/#{scene_id}/execute"
+		)
+	  end
+
+	  private
+  
+	  def headers
+		{
+		  'User-Agent' => "Switchbot v#{Switchbot::VERSION} (https://github.com/ytkg/switchbot)",
+		  'Authorization' => @token
+		}
+	  end
+
+	  def request(http_method:, endpoint:, params: {})
+		response = connection.public_send(http_method, endpoint, params)
+		response.body.deep_transform_keys(&:underscore).deep_symbolize_keys
+	  end
+	end
+end
+
+---------------Response---------------
+require 'net/http'
+require 'json'
+require 'openssl'
+
+module Switchbot
+  class Client
+    API_ENDPOINT = 'https://api.switch-bot.com/v1.1'
+
+    def initialize(token, secret)
+      @token = token
+      @secret = secret
+    end
+
+    def devices
+      request(
+        http_method: :get,
+        endpoint: '/devices'
+      )
+    end
+
+    def device(device_id)
+      Device.new(client: self, device_id: device_id)
+    end
+
+    def status(device_id:)
+      request(
+        http_method: :get,
+        endpoint: "/devices/#{device_id}/status"
+      )
+    end
+
+    def commands(device_id:, command:, parameter: 'default', command_type: 'command')
+      request(
+        http_method: :post,
+        endpoint: "/devices/#{device_id}/commands",
+        params: {
+          command: command,
+          parameter: parameter,
+          commandType: command_type
+        }
+      )
+    end
+
+    def scenes
+      request(
+        http_method: :get,
+        endpoint: '/scenes'
+      )
+    end
+
+    def scene(scene_id)
+      Scene.new(client: self, scene_id: scene_id)
+    end
+
+    def execute(scene_id:)
+      request(
+        http_method: :post,
+        endpoint: "/scenes/#{scene_id}/execute"
+      )
+    end
+
+    private
+
+    def headers
+      nonce = generate_nonce
+      t = timestamp
+      string_to_sign = "#{@token}#{t}#{nonce}"
+      sign = generate_sign(string_to_sign)
+      {
+        'Authorization' => @token,
+        't' => t.to_s,
+        'sign' => sign,
+        'nonce' => nonce,
+        'Content-Type' => 'application/json; charset=utf8'
+      }
+    end
+
+    def request(http_method:, endpoint:, params: {})
+      uri = URI("#{API_ENDPOINT}#{endpoint}")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = case http_method
+                when :get
+                  Net::HTTP::Get.new(uri.request_uri, headers)
+                when :post
+                  req = Net::HTTP::Post.new(uri.request_uri, headers)
+                  req.body = params.to_json
+                  req
+                else
+                  raise ArgumentError, "Unsupported HTTP method: #{http_method}"
+                end
+      response = http.request(request)
+      JSON.parse(response.body, symbolize_names: true)
+    end
+
+    def generate_nonce
+      SecureRandom.hex(16)
+    end
+
+    def timestamp
+      (Time.now.to_f * 1000).to_i
+    end
+
+    def generate_sign(string_to_sign)
+      digest = OpenSSL::Digest.new('sha256')
+      hmac = OpenSSL::HMAC.digest(digest, @secret, string_to_sign)
+      Base64.strict_encode64(hmac)
+    end
+  end
+end

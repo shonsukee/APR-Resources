@@ -1,0 +1,113 @@
+---------------User Query---------------
+def main() -> None:
+    # True Min Run time should be the specified interval less the
+    # regular sleep time
+    real_min_run_time = MIN_RUN_TIME - SLEEP_TIME
+    url = f"https://api.switch-bot.com/v1.0/devices/{DEVID}/status"
+    headers = {'Authorization': APIKEY}
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN,
+                                   org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    logger.info(f"Startup: {UA_STRING}")
+    while True:
+        (deg_f, rel_hum) = read_sensor(url, headers)
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        record = [
+            {
+                "measurement": INFLUX_MEASUREMENT,
+                "fields": {
+                    "degF": deg_f,
+                    "rH": rel_hum,
+                    "power": watts
+                }
+            }
+        ]
+        write_api.write(bucket=INFLUX_BUCKET, record=record)
+        if rel_hum >= HIGH:
+            asyncio.run(plug_on(PLUG_IP))
+            logger.info(f"Change state to ON, rH: {rel_hum}")
+            # sleep for specified min run time, less standard sleep time,
+            # we will still perform that sleep later anyhow.
+            sleep(real_min_run_time)
+        elif rel_hum < LOW:
+            asyncio.run(plug_off(PLUG_IP))
+            logger.info(f"Change state to OFF, rH: {rel_hum}")
+        else:
+            pass
+        sleep(SLEEP_TIME)
+
+---------------Response---------------
+import asyncio
+from time import sleep
+from influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import SYNCHRONOUS
+import logging
+
+# Constants (Assumed to be defined elsewhere)
+MIN_RUN_TIME = 600
+SLEEP_TIME = 60
+HIGH = 70
+LOW = 30
+APIKEY = "your_api_key"
+DEVID = "your_device_id"
+INFLUX_URL = "your_influxdb_url"
+INFLUX_TOKEN = "your_influxdb_token"
+INFLUX_ORG = "your_influxdb_org"
+INFLUX_BUCKET = "your_influxdb_bucket"
+INFLUX_MEASUREMENT = "your_measurement_name"
+PLUG_IP = "your_plug_ip"
+UA_STRING = "your_user_agent"
+
+logger = logging.getLogger(__name__)
+
+def main() -> None:
+    real_min_run_time = MIN_RUN_TIME - SLEEP_TIME
+    url = f"https://api.switch-bot.com/v1.1/devices/{DEVID}/status"
+    headers = {
+        'Authorization': APIKEY,
+        'Content-Type': 'application/json'
+    }
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    logger.info(f"Startup: {UA_STRING}")
+
+    while True:
+        (deg_f, rel_hum) = read_sensor(url, headers)
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        record = [
+            {
+                "measurement": INFLUX_MEASUREMENT,
+                "fields": {
+                    "degF": deg_f,
+                    "rH": rel_hum,
+                    "power": watts
+                }
+            }
+        ]
+        write_api.write(bucket=INFLUX_BUCKET, record=record)
+
+        if rel_hum >= HIGH:
+            asyncio.run(plug_on(PLUG_IP))
+            logger.info(f"Change state to ON, rH: {rel_hum}")
+            sleep(real_min_run_time)
+        elif rel_hum < LOW:
+            asyncio.run(plug_off(PLUG_IP))
+            logger.info(f"Change state to OFF, rH: {rel_hum}")
+
+        sleep(SLEEP_TIME)
+
+async def read_sensor(url: str, headers: dict) -> tuple:
+    # Placeholder implementation for the sensor reading function
+    return 72.0, 45.0  # Example values for temperature and humidity
+
+async def read_consumption(plug_ip: str) -> float:
+    # Placeholder implementation for the power consumption reading function
+    return 150.0  # Example value for power consumption
+
+async def plug_on(plug_ip: str):
+    # Placeholder implementation for turning the plug on
+    pass
+
+async def plug_off(plug_ip: str):
+    # Placeholder implementation for turning the plug off
+    pass

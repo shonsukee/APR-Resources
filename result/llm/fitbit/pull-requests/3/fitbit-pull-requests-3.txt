@@ -1,0 +1,133 @@
+---------------User Query---------------
+var OAuth = require("oauth").OAuth;
+
+function FitbitApiClient(consumerKey, consumerSecret) {
+	this.oauth = new OAuth(
+		"https://api.fitbit.com/oauth/request_token",
+		"https://api.fitbit.com/oauth/access_token",
+		consumerKey,
+		consumerSecret,
+		"1.0",
+		null,
+		"HMAC-SHA1"
+	);
+}
+
+FitbitApiClient.prototype = {
+	getRequestToken: function () {
+		var getRequestToken = Promise.promisify(this.oauth.getOAuthRequestToken, this.oauth);
+		return getRequestToken();
+	},
+
+	getAccessToken: function (requestToken, requestTokenSecret, verifier) {
+		var getAccessToken = Promise.promisify(this.oauth.getOAuthAccessToken, this.oauth);
+		return getAccessToken(requestToken, requestTokenSecret, verifier);
+	},
+
+	get: function (path, accessToken, accessTokenSecret, userId) {
+		var getResource = Promise.promisify(this.oauth.get, this.oauth);
+		return getResource(getUrl(path, userId), accessToken, accessTokenSecret);
+	},
+
+	post: function (path, accessToken, accessTokenSecret, data, userId) {
+		var postResource = Promise.promisify(this.oauth.post, this.oauth);
+		return postResource(getUrl(path, userId), accessToken, accessTokenSecret, data);
+	},
+
+	put: function (path, accessToken, accessTokenSecret, data, userId) {
+		var putResource = Promise.promisify(this.oauth.put, this.oauth);
+		return putResource(getUrl(path, userId), accessToken, accessTokenSecret, data);
+	},
+
+	delete: function (path, accessToken, accessTokenSecret, userId) {
+		var deleteResource = Promise.promisify(this.oauth.delete, this.oauth);
+		return deleteResource(getUrl(path, userId), accessToken, accessTokenSecret);
+	}
+};
+
+function getUrl(path, userId) {
+	return url = "https://api.fitbit.com/1/user/" + (userId || "-") + path;
+}
+
+
+module.exports = FitbitApiClient;
+---------------Response---------------
+const { Client } = require("node-fetch");
+
+function FitbitApiClient(consumerKey, consumerSecret) {
+    this.client = new Client({
+        baseURL: "https://api.fitbit.com",
+        headers: {
+            Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`
+        }
+    });
+}
+
+FitbitApiClient.prototype = {
+    getRequestToken: async function () {
+        const response = await this.client.post("/oauth2/token", {
+            grant_type: "authorization_code"
+        });
+        return response.json();
+    },
+
+    getAccessToken: async function (code) {
+        const response = await this.client.post("/oauth2/token", {
+            grant_type: "authorization_code",
+            code
+        });
+        return response.json();
+    },
+
+    refreshAccessToken: async function (refreshToken) {
+        const response = await this.client.post("/oauth2/token", {
+            grant_type: "refresh_token",
+            refresh_token: refreshToken
+        });
+        return response.json();
+    },
+
+    get: async function (path, accessToken) {
+        const response = await this.client.get(path, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+        return response.json();
+    },
+
+    post: async function (path, accessToken, data) {
+        const response = await this.client.post(path, data, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return response.json();
+    },
+
+    put: async function (path, accessToken, data) {
+        const response = await this.client.put(path, data, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            }
+        });
+        return response.json();
+    },
+
+    delete: async function (path, accessToken) {
+        const response = await this.client.delete(path, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+        return response.json();
+    }
+};
+
+function getUrl(path, userId) {
+    return `https://api.fitbit.com/1/user/${userId || "-"}/${path}`;
+}
+
+module.exports = FitbitApiClient;

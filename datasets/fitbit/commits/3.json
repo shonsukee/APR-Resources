@@ -1,0 +1,8 @@
+{
+    "fitbit": {
+        "request_url": "https://api.fitbit.com/oauth/request_token",
+        "authorize_url": "https://www.fitbit.com/oauth/authorize",
+        "access_url": "https://api.fitbit.com/oauth/access_token",
+        "oauth": 1
+    }
+}

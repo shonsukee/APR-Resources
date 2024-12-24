@@ -1,0 +1,160 @@
+---------------User Query---------------
+class FitbitOauthClient(object):
+    API_ENDPOINT = "https://api.fitbit.com"
+    AUTHORIZE_ENDPOINT = "https://www.fitbit.com"
+
+    request_token_url = "%s/oauth/request_token" % API_ENDPOINT
+    access_token_url = "%s/oauth/access_token" % API_ENDPOINT
+    authorization_url = "%s/oauth/authorize" % AUTHORIZE_ENDPOINT
+
+    def __init__(self, client_key, client_secret, resource_owner_key=None,
+                 resource_owner_secret=None, user_id=None, callback_uri=None,
+                 *args, **kwargs):
+        """
+        Create a FitbitOauthClient object. Specify the first 5 parameters if
+        you have them to access user data. Specify just the first 2 parameters
+        to access anonymous data and start the set up for user authorization.
+        Set callback_uri to a URL and when the user has granted us access at
+        the fitbit site, fitbit will redirect them to the URL you passed.  This
+        is how we get back the magic verifier string from fitbit if we're a web
+        app. If we don't pass it, then fitbit will just display the verifier
+        string for the user to copy and we'll have to ask them to paste it for
+        us and read it that way.
+        """
+
+        self.session = requests.Session()
+        self.client_key = client_key
+        self.client_secret = client_secret
+        self.resource_owner_key = resource_owner_key
+        self.resource_owner_secret = resource_owner_secret
+        if user_id:
+            self.user_id = user_id
+        params = {'client_secret': client_secret}
+        if callback_uri:
+            params['callback_uri'] = callback_uri
+        if self.resource_owner_key and self.resource_owner_secret:
+            params['resource_owner_key'] = self.resource_owner_key
+            params['resource_owner_secret'] = self.resource_owner_secret
+        self.oauth = OAuth1Session(client_key, **params)
+
+    def _request(self, method, url, **kwargs):
+        """
+        A simple wrapper around requests.
+        """
+        return self.session.request(method, url, **kwargs)
+
+    def make_request(self, url, data={}, method=None, **kwargs):
+        """
+        Builds and makes the OAuth Request, catches errors
+        https://wiki.fitbit.com/display/API/API+Response+Format+And+Errors
+        """
+        if not method:
+            method = 'POST' if data else 'GET'
+        auth = OAuth1(
+            self.client_key, self.client_secret, self.resource_owner_key,
+            self.resource_owner_secret, signature_type='auth_header')
+        response = self._request(method, url, data=data, auth=auth, **kwargs)
+
+        if response.status_code == 401:
+            raise HTTPUnauthorized(response)
+        elif response.status_code == 403:
+            raise HTTPForbidden(response)
+        elif response.status_code == 404:
+            raise HTTPNotFound(response)
+        elif response.status_code == 409:
+            raise HTTPConflict(response)
+        elif response.status_code == 429:
+            exc = HTTPTooManyRequests(response)
+            exc.retry_after_secs = int(response.headers['Retry-After'])
+            raise exc
+
+        elif response.status_code >= 500:
+            raise HTTPServerError(response)
+        elif response.status_code >= 400:
+            raise HTTPBadRequest(response)
+        return response
+
+---------------Response---------------
+class FitbitOauthClient(object):
+    API_ENDPOINT = "https://api.fitbit.com"
+    AUTHORIZE_ENDPOINT = "https://www.fitbit.com"
+
+    request_token_url = None  # Deprecated in OAuth2
+    access_token_url = f"{API_ENDPOINT}/oauth2/token"
+    authorization_url = f"{API_ENDPOINT}/oauth2/authorize"
+
+    def __init__(self, client_id, client_secret, access_token=None, refresh_token=None, callback_uri=None, *args, **kwargs):
+        """
+        Create a FitbitOauthClient object. Specify the first 4 parameters if
+        you have them to access user data. Use callback_uri for redirection during user authorization.
+        """
+
+        self.session = requests.Session()
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self.callback_uri = callback_uri
+
+    def _refresh_access_token(self):
+        """
+        Refresh the access token using the refresh token.
+        """
+        refresh_url = f"{self.API_ENDPOINT}/oauth2/token"
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        response = self.session.post(refresh_url, data=data)
+        if response.status_code == 200:
+            tokens = response.json()
+            self.access_token = tokens.get("access_token")
+            self.refresh_token = tokens.get("refresh_token")
+        else:
+            response.raise_for_status()
+
+    def _request(self, method, url, **kwargs):
+        """
+        A simple wrapper around requests with automatic token refresh.
+        """
+        if not self.access_token:
+            raise ValueError("Access token is not set.")
+        
+        headers = kwargs.pop("headers", {})
+        headers["Authorization"] = f"Bearer {self.access_token}"
+        kwargs["headers"] = headers
+
+        response = self.session.request(method, url, **kwargs)
+        if response.status_code == 401 and "invalid_token" in response.text:
+            self._refresh_access_token()
+            headers["Authorization"] = f"Bearer {self.access_token}"
+            kwargs["headers"] = headers
+            response = self.session.request(method, url, **kwargs)
+        return response
+
+    def make_request(self, url, data=None, method="GET", **kwargs):
+        """
+        Builds and makes the API request, catches errors.
+        """
+        response = self._request(method, url, json=data, **kwargs)
+
+        if response.status_code == 401:
+            raise HTTPUnauthorized(response)
+        elif response.status_code == 403:
+            raise HTTPForbidden(response)
+        elif response.status_code == 404:
+            raise HTTPNotFound(response)
+        elif response.status_code == 409:
+            raise HTTPConflict(response)
+        elif response.status_code == 429:
+            exc = HTTPTooManyRequests(response)
+            exc.retry_after_secs = int(response.headers.get("Retry-After", 0))
+            raise exc
+        elif response.status_code >= 500:
+            raise HTTPServerError(response)
+        elif response.status_code >= 400:
+            raise HTTPBadRequest(response)
+
+        return response

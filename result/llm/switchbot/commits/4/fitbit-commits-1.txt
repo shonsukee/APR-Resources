@@ -1,0 +1,57 @@
+---------------User Query---------------
+class SwitchBot:
+    BASE_URL        = 'https://api.switch-bot.com'
+    BASE_PATH       = os.path.dirname(os.path.abspath(__file__))
+    TOKEN_FILE      = os.path.join(BASE_PATH, 'token.txt')
+
+    def __init__(self):
+        with open(SwitchBot.TOKEN_FILE, 'r') as f:
+            self.token = f.read().strip()
+
+    def get_headers(self):
+        return { 'Authorization': self.token }
+
+    def get_url(self, *pathes):
+        url = SwitchBot.BASE_URL + '/v1.0'
+        for path in pathes:
+            url += '/' + path
+        return url
+
+    def do_get(self, url, data, headers={}):
+        req = Request(url, data, headers)
+        req.add_header('Authorization', self.token)
+        res = urlopen(req)
+        return res.read().decode()
+
+---------------Response---------------
+import os
+import json
+import requests
+
+class SwitchBot:
+    BASE_URL = 'https://api.switch-bot.com/v1.1'
+    BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+    TOKEN_FILE = os.path.join(BASE_PATH, 'token.txt')
+
+    def __init__(self):
+        with open(SwitchBot.TOKEN_FILE, 'r') as f:
+            self.token = f.read().strip()
+
+    def get_headers(self):
+        return {
+            'Authorization': self.token,
+            'Content-Type': 'application/json; charset=utf8'
+        }
+
+    def get_url(self, *paths):
+        return '/'.join([SwitchBot.BASE_URL] + list(paths))
+
+    def do_get(self, url, params=None):
+        response = requests.get(url, headers=self.get_headers(), params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def do_post(self, url, data=None):
+        response = requests.post(url, headers=self.get_headers(), data=json.dumps(data))
+        response.raise_for_status()
+        return response.json()

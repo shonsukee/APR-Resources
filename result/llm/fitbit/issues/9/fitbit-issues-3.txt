@@ -1,0 +1,42 @@
+---------------User Query---------------
+key <- '<edited>'
+secret <- '<edited>'
+tokenURL <- 'http://api.fitbit.com/oauth/request_token'
+accessTokenURL <- 'http://api.fitbit.com/oauth/access_token'
+authorizeURL <- 'https://www.fitbit.com/oauth/authorize'
+
+fbr <- oauth_app('fitbitR',key,secret)
+fitbit <- oauth_endpoint(tokenURL,authorizeURL,accessTokenURL)
+
+token <- oauth1.0_token(fitbit,fbr)
+sig <- sign_oauth1.0(fbr,
+    token=token$oauth_token,
+    token_secret=token$oauth_token_secret
+)
+
+dta <- GET("http://api.fitbit.com/1/user/-/activities/steps/date/2012-08-01/1m.json",sig)
+# this will fail unless using curlPercentEncode
+---------------Response---------------
+library(httr)
+
+key <- '<edited>'
+secret <- '<edited>'
+oauth_token <- '<edited>'
+oauth_token_secret <- '<edited>'
+base_url <- 'https://api.fitbit.com/1'
+
+# Use OAuth 2.0 as OAuth 1.0 is deprecated
+token <- oauth2.0_token(
+    oauth_endpoints("fitbit"),
+    app = oauth_app("fitbitR", key = key, secret = secret),
+    cache = FALSE
+)
+
+# Replacing the old request with the latest API for activity steps
+dta <- GET(
+    url = paste0(base_url, "/activities/steps/date/2012-08-01/1m.json"),
+    config = add_headers(Authorization = paste("Bearer", token$credentials$access_token))
+)
+
+content <- content(dta, "text")
+print(content)

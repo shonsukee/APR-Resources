@@ -1,0 +1,19 @@
+---------------User Query---------------
+request_token = client.request_token
+current_user.update(:token => request_token.token, :secret => request_token.secret)
+redirect "http://www.fitbit.com/oauth/authorize?oauth_token=#{current_user.token.to_s}"
+
+---------------Response---------------
+require 'oauth2'
+
+client = OAuth2::Client.new(CLIENT_ID, CLIENT_SECRET, site: 'https://api.fitbit.com')
+auth_url = client.auth_code.authorize_url(redirect_uri: 'http://localhost:3000/callback')
+
+puts "Visit the following URL to authorize: #{auth_url}"
+
+# Assuming `code` is obtained from the redirect callback
+token = client.auth_code.get_token(CODE, redirect_uri: 'http://localhost:3000/callback')
+
+current_user.update(token: token.token, refresh_token: token.refresh_token, expires_at: token.expires_at)
+
+redirect "http://www.fitbit.com/oauth2/authorize?oauth_token=#{current_user.token}"

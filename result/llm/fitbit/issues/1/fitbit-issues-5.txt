@@ -1,0 +1,51 @@
+---------------User Query---------------
+    [Route("fitbit")]
+    public ActionResult Authorize()
+    {
+
+        //make sure you've set these up in Web.Config under <appSettings>:
+        string ConsumerKey = ConfigurationManager.AppSettings["FitbitConsumerKey"];
+        string ConsumerSecret = ConfigurationManager.AppSettings["FitbitConsumerSecret"];
+
+
+        Fitbit.Api.Authenticator authenticator = new Fitbit.Api.Authenticator(ConsumerKey,
+                                                                                ConsumerSecret,
+                                                                                "http://api.fitbit.com/oauth/request_token",
+                                                                                "http://api.fitbit.com/oauth/access_token",
+                                                                                "http://api.fitbit.com/oauth/authorize");
+        RequestToken token = authenticator.GetRequestToken();
+        Session.Add("FitbitRequestTokenSecret", token.Secret.ToString()); //store this somehow, like in Session as we'll need it after the Callback() action
+
+        //note: at this point the RequestToken object only has the Token and Secret properties supplied. Verifier happens later.
+
+        string authUrl = authenticator.GenerateAuthUrlFromRequestToken(token, true);
+        return Redirect(authUrl);
+    }
+---------------Response---------------
+[Route("fitbit")]
+public ActionResult Authorize()
+{
+    // Set these in your Web.Config under <appSettings>:
+    string clientId = ConfigurationManager.AppSettings["FitbitClientId"];
+    string clientSecret = ConfigurationManager.AppSettings["FitbitClientSecret"];
+
+    // Use OAuth 2.0 endpoints for Fitbit
+    string redirectUri = Url.Action("Callback", "Fitbit", null, Request.Url.Scheme);
+    string authorizationEndpoint = "https://www.fitbit.com/oauth2/authorize";
+    string tokenEndpoint = "https://api.fitbit.com/oauth2/token";
+
+    // Create the authorization URL with required scopes
+    var queryParams = new NameValueCollection
+    {
+        { "response_type", "code" },
+        { "client_id", clientId },
+        { "redirect_uri", redirectUri },
+        { "scope", "activity profile heartrate" } // Add desired scopes
+    };
+
+    var queryString = string.Join("&", queryParams.AllKeys.Select(key => $"{key}={HttpUtility.UrlEncode(queryParams[key])}"));
+    string authUrl = $"{authorizationEndpoint}?{queryString}";
+
+    // Redirect to Fitbit authorization URL
+    return Redirect(authUrl);
+}

@@ -1,0 +1,1623 @@
+---------------User Query---------------
+// SleepLogList returns the sleep log list for based on given parameters
+func (m *Session) SleepLogList(params LogListParameters) (SleepLogList, error) {
+	parameterList := url.Values{}
+	if params.BeforeDate != "" {
+		parameterList.Add("beforeDate", params.BeforeDate)
+		parameterList.Add("sort", "desc")
+	} else if params.AfterDate != "" {
+		parameterList.Add("afterDate", params.AfterDate)
+		parameterList.Add("sort", "asc")
+	} else {
+		return SleepLogList{}, errors.New("beforeDate or afterDate must be given")
+	}
+
+	if params.Limit > 0 {
+		if params.Limit > 20 {
+			return SleepLogList{}, errors.New("limit must be 20 or less")
+		}
+		parameterList.Add("limit", strconv.Itoa(params.Limit))
+	}
+
+	parameterList.Add("offset", strconv.Itoa(params.Offset))
+
+	contents, err := m.makeRequest("https://api.fitbit.com/1/user/-/sleep/list.json?" + parameterList.Encode())
+	if err != nil {
+		return SleepLogList{}, err
+	}
+
+	activityResponse := SleepLogList{}
+	if err := json.Unmarshal(contents, &activityResponse); err != nil {
+		return SleepLogList{}, err
+	}
+
+	return activityResponse, nil
+}
+
+
+---------------Response---------------
+```go
+// SleepLogList returns the sleep log list for based on given parameters
+func (m *Session) SleepLogList(params LogListParameters) (SleepLogList, error) {
+	parameterList := url.Values{}
+	if params.BeforeDate != "" {
+		parameterList.Add("beforeDate", params.BeforeDate)
+		parameterList.Add("sort", "desc")
+	} else if params.AfterDate != "" {
+		parameterList.Add("afterDate", params.AfterDate)
+		parameterList.Add("sort", "asc")
+	} else {
+		return SleepLogList{}, errors.New("beforeDate or afterDate must be given")
+	}
+
+	if params.Limit > 0 {
+		if params.Limit > 100 {
+			return SleepLogList{}, errors.New("limit must be 100 or less")
+		}
+		parameterList.Add("limit", strconv.Itoa(params.Limit))
+	}
+
+	parameterList.Add("offset", strconv.Itoa(params.Offset))
+
+	contents, err := m.makeRequest("https://api.fitbit.com/1.2/user/-/sleep/list.json?" + parameterList.Encode())
+	if err != nil {
+		return SleepLogList{}, err
+	}
+
+	activityResponse := SleepLogList{}
+	if err := json.Unmarshal(contents, &activityResponse); err != nil {
+		return SleepLogList{}, err
+	}
+
+	return activityResponse, nil
+}
+```
+
+---------------Similarity Score---------------
+0.7586377809622643
+
+---------------Relevant Context---------------
+---------------latest_natural_language---------------
+
+Context number 1 (score: 0.817515135): 
+## Get Sleep Log List
+
+This endpoint returns a list of a user's sleep log entries before or after a
+given date, and specifying offset, limit and sort order. The data returned for
+different dates can include sleep periods that began on the previous date. For
+example, a sleep log entry for 2018-10-21 may have ended that day but started
+the previous night on 2018-10-20.
+
+It uses [units](/build/reference/web-api/developer-guide/application-
+design/#Unit-Systems) that correspond to the Accept-Language header provided.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Query Parameters**  
+beforeDate | optional/required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either **beforeDate** or **afterDate** must be specified. Set sort to desc when using beforeDate. | string ($datetime)  
+|||  
+afterDate | optional/required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either **beforeDate** or **afterDate** must be specified. Set sort to asc when using afterDate. | string ($int)  
+sort | required | **Supported** : `asc` | `desc`  
+The sort oder of entries by date. Use asc to show the oldest sleep log first. Use desc to show the most frequent sleep log first. | string  
+limit | required | The number of sleep logs to be returned.  
+  
+**Maximum:** `100` | string ($int)  
+offset | required | **Supported** : `0` (zero)  
+  
+**IMPORTANT** : To paginate, request the next and previous links in the pagination response object. Do not manually specify the offset parameter, as it will be removed in the future and your app will break. | string ($int)  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values.
+Context number 2 (score: 0.788215458): 
+# Get Sleep Log by Date
+
+This endpoint returns a list of a user's sleep log entries for a given date.
+The data returned can include sleep periods that began on the previous date.
+For example, if you request a Sleep Log for 2021-12-22, it may return a log
+entry that began the previous night on 2021-12-21, but ended on 2021-12-22.
+
+It uses [units](/build/reference/web-api/developer-guide/application-
+design/#Unit-Systems) that correspond to the Accept-Language header provided.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+date | required | The date for the sleep log to be returned in the format yyyy-MM-dd.  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+sleep : dateOfSleep | The date the sleep log ended  
+sleep : duration | Length of the sleep in milliseconds.  
+sleep : efficiency | Calculated sleep efficiency score. This is not the sleep score available in the mobile application.  
+sleep : endTime | Time the sleep log ended.  
+sleep : infoCode | An integer value representing the quality of data collected within the sleep log. 
+
+  * **0** = Sufficient data to generate a sleep log.
+  * **1** = Insufficient heart rate data.
+  * **2** = Sleep period was too short (less than 3 hours).
+  * **3** = Server-side issue.
+
+  
+sleep : isMainSleep | Boolean value: `true` or `false`  
+sleep : levels : data : dateTime | Timestamp the user started in sleep level.  
+sleep : levels : data : level | The sleep level the user entered.
+Context number 3 (score: 0.787181437): 
+{
+        "meta": {
+            "retryDuration": 3000,
+            "state": "pending"
+        }
+        "sleep": [
+            {{ existing sleep details }}
+        ],
+          "summary": {
+        "stages": {
+          "deep": 104,
+          "light": 205,
+          "rem": 75,
+          "wake": 78
+        },
+    
+        "summary": {
+            stages: {
+                "deep": 55,
+                "light": 176,
+                "rem": 65,
+                "wake": 21
+            }
+            "totalMinutesAsleep": 296,
+            "totalSleep Records": 2,
+            "totalTimeInBed": 317
+        }
+    }
+    
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-log-by-date-range/)
+
+[Get Sleep Log by Date Range](/build/reference/web-api/sleep/get-sleep-log-by-
+date-range/)
+Context number 4 (score: 0.785376728): 
+# Get Sleep Log by Date Range
+
+This endpoint returns a list of a user's sleep log entries for a date range.
+The data returned for either date can include a sleep period that ended that
+date but began on the previous date. For example, if you request a sleep log
+between 2021-12-22 and 2021-12-26, it may return log entries that span
+2021-12-21 and 2021-12-22, as well as 2021-12-25 and 2021-12-26.
+
+It uses [units](/build/reference/web-api/developer-guide/application-
+design/#Unit-Systems) that correspond to the Accept-Language header provided.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+startDate | required | The date for the first sleep log to be returned in the format yyyy-MM-dd.  
+endDate | required | The date for the last sleep log to be returned in the format yyyy-MM-dd.  
+  
+**Maximum range:** `100 days`  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+sleep : dateOfSleep | The date the sleep log ended.  
+sleep : duration | Length of the sleep in milliseconds.  
+sleep : efficiency | Calculated sleep efficiency score. This is not the sleep score available in the mobile application.  
+sleep : endTime | Time the sleep log ended.  
+sleep : infoCode | An integer value representing the quality of data collected within the sleep log. 
+
+  * **0** = Sufficient data to generate a sleep log.
+  * **1** = Insufficient heart rate data.
+Context number 5 (score: 0.782651782): 
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+  
+
+* * *
+
+## Additional Information
+
+### Types of sleep logs
+
+This endpoint supports two kinds of sleep log types:  
+
+  1. stages : Levels data is returned with 30-second granularity. 'Sleep Stages' levels include deep, light, rem, and wake. 
+  2. classic : Levels data returned with 60-second granularity. 'Sleep Pattern' levels include asleep, restless, and awake.
+
+> **Note:** shortData is only included for stages sleep logs and includes wake
+> periods that are 3 minutes or less in duration. This distinction is to
+> simplify graphically distinguishing short wakes from longer wakes, but they
+> are physiologically equivalent.
+
+For information on how to interpret the sleep data, see [Interpreting the
+Sleep Stage and Short Data](/build/reference/web-api/developer-guide/best-
+practices/#Interpreting-the-Sleep-Stage-and-Short-Data).
+Context number 6 (score: 0.773299038): 
+sleep : startTime | Time the sleep log begins.  
+sleep : timeInBed | Total number of minutes the user was in bed.  
+sleep : type | The type of sleep log.  
+Supported : `classic` | `stages`  
+      
+    
+    {
+      "sleep": {
+        "dateOfSleep": "2020-02-09",
+        "duration": 720000,
+        "efficiency": 100,
+        "endTime": "2020-02-09T22:12:00.000",
+        "infoCode": 0,
+        "isMainSleep": false,
+        "levels": {
+          "data": [
+            {
+              "dateTime": "2020-02-09T22:00:00.000",
+              "level": "asleep",
+              "seconds": 720
+            }
+          ],
+          "summary": {
+            "asleep": {
+              "count": 0,
+              "minutes": 12
+            },
+            "awake": {
+              "count": 0,
+              "minutes": 0
+            },
+            "restless": {
+              "count": 0,
+              "minutes": 0
+            }
+          }
+        },
+        "logId": 25793948582,
+        "minutesAfterWakeup": 0,
+        "minutesAsleep": 12,
+        "minutesAwake": 0,
+        "minutesToFallAsleep": 0,
+        "startTime": "2020-02-09T22:00:00.000",
+        "timeInBed": 12,
+        "type": "classic"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code.
+Context number 7 (score: 0.768166304): 
+## Response
+
+A JSON response is not returned by this endpoint.
+
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+204 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/create-sleep-log/)
+
+[Create Sleep Log](/build/reference/web-api/sleep/create-sleep-log/)
+
+[Get Sleep Goal](/build/reference/web-api/sleep/get-sleep-goals/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-goals/)
+Context number 8 (score: 0.767875): 
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+  
+
+* * *
+
+## Additional Information
+
+### Types of sleep logs
+
+This endpoint supports two kinds of sleep log types:  
+
+  1. stages : Levels data is returned with 30-second granularity. 'Sleep Stages' levels include deep, light, rem, and wake. 
+  2. classic : Levels data returned with 60-second granularity. 'Sleep Pattern' levels include asleep, restless, and awake.
+
+> **Note:** shortData is only included for stages sleep logs and includes wake
+> periods that are 3 minutes or less in duration. This distinction is to
+> simplify graphically distinguishing short wakes from longer wakes, but they
+> are physiologically equivalent.
+
+For information on how to interpret the sleep data, see [Interpreting the
+Sleep Stage and Short Data](/build/reference/web-api/developer-guide/best-
+practices/#Interpreting-the-Sleep-Stage-and-Short-Data).
+
+### Device generated sleep logs
+
+The `dateOfSleep` in the GET sleep log endpoint response is the date on which
+the sleep event ends. This means that requesting a sleep log for a given date,
+for example 2021-12-22, may return a log entry that began the previous night
+on 2021-12-21. This is to account for the fact that sleep periods typically
+take place overnight between two dates and the dateOfSleep refers to the date
+the user woke up.
+
+If the wake time during the main sleep is greater than 1 hour, the sleep log
+will be split into 2 logs.
+
+Although, if the device syncs during the wake time and consistent steps and
+hand movement occur for at least 15 minutes, then a sleep log might be
+generated for the first part of the sleep.
+Context number 9 (score: 0.765756667): 
+# Create Sleep Log
+
+Creates a log entry for a sleep event and returns a response in the format
+requested.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Query Parameters**  
+date | required | Log entry date in the format yyyy-MM-dd. | string ($date)  
+|||  
+duration | required | Duration in milliseconds. | integer  
+startTime | required | Start time; hours and minutes in the format HH:mm. | string ($date)  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+content-length | required | According to [RFC 7230, section 3.3.2](https://tools.ietf.org/html/rfc7230#section-3.3.2), this HTTP request requires the Content-Length header field containing the anticipated size of the payload body.  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+sleep : dateOfSleep | The data the sleep log ended.  
+sleep : duration | Length of the sleep in milliseconds.  
+sleep : efficiency | Calculated sleep efficiency score. This is not the sleep score available in the mobile application.  
+sleep : endTime | Time the sleep log ended.  
+sleep : infoCode |   
+sleep : isMainSleep | Boolean value: `true` or `false`  
+sleep : levels : data : dateTime | Timestamp the user started in sleep level.  
+sleep : levels : data : level | The sleep level the user entered.  
+sleep : levels : data : seconds | The length of time the user was in the sleep level.  
+Displayed in seconds.  
+sleep : levels : summary : [stage] : count | Total number of times the user entered the sleep level.
+Context number 10 (score: 0.764268517): 
+# Delete Sleep Log
+
+Deletes a sleep log with the given log id.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+log-id | required | ID of the sleep log to be deleted.  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).
+Context number 11 (score: 0.763575315): 
+summary : totalSleepRecords | The number of sleep records within the sleep log.  
+summary : timeInBed | Total number of minutes the user was in bed across all records in the sleep log.  
+      
+    
+    {
+      "pagination": {
+        "afterDate": "2020-05-01",
+        "limit": 1,
+        "next": "https://api.fitbit.com/1.2/user/-/sleep/list.json?offset=1&limit=1&sort=asc&afterDate=2020-05-01",
+        "offset": 0,
+        "previous": "",
+        "sort": "asc"
+      },
+      "sleep": [
+        {
+          "dateOfSleep": "2020-05-01",
+          "duration": 20760000,
+          "efficiency": 50,
+          "endTime": "2020-05-01T06:20:00.000",
+          "infoCode": 0,
+          "isMainSleep": true,
+          "levels": {
+            "data": [
+              {
+                "dateTime": "2020-05-01T00:33:30.000",
+                "level": "wake",
+                "seconds": 810
+              },
+              {
+                "dateTime": "2020-05-01T00:47:00.000",
+                "level": "light",
+                "seconds": 30
+              },
+              {
+                "dateTime": "2020-05-01T00:47:30.000",
+                "level": "deep",
+                "seconds": 270
+              },
+    .
+    .
+    .
+              {
+                "dateTime": "2020-05-01T06:04:00.000",
+                "level": "deep",
+                "seconds": 960
+              }
+            ],
+            "shortData": [
+              {
+                "dateTime": "2020-05-01T01:05:00.000",
+                "level": "wake",
+                "seconds": 60
+              },
+              {
+                "dateTime": "2020-05-01T01:41:00.000",
+                "level": "wake",
+                "seconds": 60
+              },
+    .
+    .
+    .
+Context number 12 (score: 0.763462961): 
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/delete-sleep-log/)
+
+[Delete Sleep Log](/build/reference/web-api/sleep/delete-sleep-log/)
+
+[Get Sleep Log by Date](/build/reference/web-api/sleep/get-sleep-log-by-date/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-log-by-date/)
+Context number 13 (score: 0.763143182): 
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+  
+
+* * *
+
+## Additional Information
+
+### Types of sleep logs
+
+This endpoint supports two kinds of sleep log types:  
+
+  1. stages : Levels data is returned with 30-second granularity. 'Sleep Stages' levels include deep, light, rem, and wake. 
+  2. classic : Levels data returned with 60-second granularity. 'Sleep Pattern' levels include asleep, restless, and awake.
+
+> **Note:** shortData is only included for stages sleep logs and includes wake
+> periods that are 3 minutes or less in duration. This distinction is to
+> simplify graphically distinguishing short wakes from longer wakes, but they
+> are physiologically equivalent.
+
+For information on how to interpret the sleep data, see [Interpreting the
+Sleep Stage and Short Data](/build/reference/web-api/developer-guide/best-
+practices/#Interpreting-the-Sleep-Stage-and-Short-Data).
+
+### Device generated sleep logs
+
+The `dateOfSleep` in the GET sleep log endpoint response is the date on which
+the sleep event ends. This means that requesting a sleep log for a given date,
+for example 2021-12-22, may return a log entry that began the previous night
+on 2021-12-21.
+Context number 14 (score: 0.757850051): 
+This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+201 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+  
+
+* * *
+
+## Additional Information
+
+It is **NOT** possible to create overlapping log entries. The `dateOfSleep` in
+the response for the sleep log is the date on which the sleep event ends.
+
+This endpoint supports two kinds of sleep data:  
+
+  1. stages : Levels data is returned with 30-second granularity. 'Sleep Stages' levels include deep, light, rem, and wake. 
+  2. classic : Levels data returned with 60-second granularity. 'Sleep Pattern' levels include asleep, restless, and awake.
+
+> **Note:** shortData is only included for stages sleep logs and includes wake
+> periods that are 3 minutes or less in duration. This distinction is to
+> simplify graphically distinguishing short wakes from longer wakes, but they
+> are physiologically equivalent.
+
+### Manually Created Sleep Logs
+
+A manual sleep log is either a sleep log that has human input through the
+mobile or web application, or a 3rd party application records sleep using the
+[Create Sleep Log](/build/reference/web-api/sleep/create-sleep-log/) endpoint.
+When a sleep log is manually recorded, a "classic" sleep log is generated.
+Sleep "stage" logs use the device heart rate and movement to calculate sleep
+stage data. When manually entering a sleep log, this information is typically
+not available.
+
+[!
+Context number 15 (score: 0.757070184): 
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goal : minDuration | Length of the sleep goal period in minutes.  
+goal : updatedOn | The timestamp that the goal was created/updated.  
+      
+    
+    {
+      "goal": {
+        "minDuration": 600,
+        "updatedOn": "2020-01-01T00:26:40.794Z"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+201 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+[Create Sleep Log](/build/reference/web-api/sleep/create-sleep-log/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/create-sleep-log/)
+Context number 16 (score: 0.756564915): 
+# Get Body Fat Log
+
+Retrieves a list of all user's body fat log entries for a given date.
+
+**Scope:** _weight_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+date | required | The date in the format yyyy-MM-dd.  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+fat : date | The date the body fat log was recorded.  
+fat : fat | The body fat percentage.  
+fat : logId | The body fat log Id.  
+fat : source | The location where the body fat data originated. See ["source" values](/build/reference/web-api/body/get-bodyfat-log/#source-values) for more information.  
+  
+**Support:** `API` | `Aria` | `AriaAir` | `Withings`  
+fat : time | The timestamp when the body fat log was recorded.  
+      
+    
+    {
+      "fat": [
+        {
+          "date": "2019-03-20",
+          "fat": 15,
+          "logId": 1553067000000,
+          "source": "Aria",
+          "time": "07:38:14"
+        }
+      ]
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+Context number 17 (score: 0.756402135): 
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+pagination : [date] | The specified beforeDate or afterDate.  
+pagination : limit | The specified limit.  
+pagination : next |   
+pagination : offset | The specified offset.  
+pagination : previous |   
+pagination : sort | The specified sort order.  
+sleep : dateOfSleep | The data the sleep log ended.  
+sleep : duration | Length of the sleep in milliseconds.  
+sleep : efficiency | Calculated sleep efficiency score. This is not the sleep score available in the mobile application.  
+sleep : endTime | Time the sleep log ended.  
+sleep : infoCode | An integer value representing the quality of data collected within the sleep log. 
+
+  * **0** = Sufficient data to generate a sleep log.
+  * **1** = Insufficient heart rate data.
+  * **2** = Sleep period was too short (less than 3 hours).
+  * **3** = Server-side issue.
+
+  
+sleep : isMainSleep | Boolean value: `true` or `false`  
+sleep : levels : data : dateTime | Timestamp the user started in sleep level.  
+sleep : levels : data : level | The sleep level the user entered. The values returned for the sleep log type are:   
+**classic** : `restless` | `asleep` | `awake`  
+**stages** : `deep` | `light` | `rem` | `wake`  
+sleep : levels : data : seconds | The length of time the user was in the sleep level. Displayed in seconds.  
+sleep : levels : shortData : dateTime | Timestamp the user started in sleep level. Only supported when log type = stages.  
+sleep : levels : shortData : level | The sleep level the user entered. Only supported when log type = stages.  
+sleep : levels : shortData : seconds | The length of time the user was in the sleep level. Displayed in seconds.
+Context number 18 (score: 0.751824379): 
+# Get ECG Log List
+
+This endpoint retrieves a list of the user’s Electrocardiogram (ECG) log
+entries before or after a given day.
+
+_**Note:** The ECG API is for research use or investigational use only, and is
+not intended for clinical or diagnostic purposes._
+
+**Scope:** _electrocardiogram_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+  
+**Query Parameters**  
+beforeDate | optional / required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either beforeDate or afterDate must be specified. | string ($date or $timestamp)  
+|||  
+afterDate | optional / required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either beforeDate or afterDate must be specified. | string ($date or $timestamp)  
+sort | required | The sort order of entries by date. Use asc (ascending) when using afterDate. Use desc (descending) when using before date. | string  
+limit | required | The number of entries returned. See [Limit / Offset](/build/reference/web-api/electrocardiogram/get-ecg-log-list/#Limit-Offset) for more information.  
+  
+**Maximum:** `10` | integer  
+offset | required | See [Limit / Offset](/build/reference/web-api/electrocardiogram/get-ecg-log-list/#Limit-Offset) for more information.  
+  
+**Supported:** `0`  
+| integer  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+ecgReadings : startTime | The date and time when the reading was started on the device.
+Context number 19 (score: 0.7511729): 
+It does not include before falling asleep or after waking up.  
+sleep : minutesToFallAsleep | The total number of minutes before the user falls asleep. This value is generally 0 for autosleep created sleep logs.  
+sleep : logType | The type of sleep in terms of how it was logged. See "logType" for more detail.  
+  
+**Supported** : `auto_detected` | `manual`  
+sleep : startTime | Time the sleep log begins.  
+sleep : timeInBed | Total number of minutes the user was in bed.  
+sleep : type | The type of sleep log.  
+Supported : `classic` | `stages`  
+      
+    
+    {
+      "sleep": [
+        {
+          "dateOfSleep": "2020-01-27",
+          "duration": 4560000,
+          "efficiency": 86,
+          "endTime": "2020-01-27T00:17:30.000",
+          "infoCode": 2,
+          "isMainSleep": true,
+          "levels": {
+            "data": [
+              {
+                "dateTime": "2020-01-26T23:01:00.000",
+                "level": "restless",
+                "seconds": 360
+              },
+              {
+                "dateTime": "2020-01-26T23:07:00.000",
+                "level": "asleep",
+                "seconds": 1800
+              },
+    .
+    .
+    .
+Context number 20 (score: 0.748653412): 
+If the sleep logs are still in a processing state, a "meta"
+response will be returned. This response will indicate a retry duration given
+in milliseconds. The "meta" response may evolve with additional fields in the
+future; API clients should be prepared to ignore any new object properties
+they do not recognize.
+
+If the user has only 1 sleep log that is being processed, the response will
+contain only the meta field.
+
+    
+    
+    {
+        "meta": {
+            "retryDuration": 3000,
+            "state": "pending"
+        }
+    }
+    
+
+However, if there is a second sleep log present for that day, then the sleep,
+summary and meta fields will be returned.
+
+    
+    
+    {
+        "meta": {
+            "retryDuration": 3000,
+            "state": "pending"
+        }
+        "sleep": [
+            {{ existing sleep details }}
+        ],
+          "summary": {
+        "stages": {
+          "deep": 104,
+          "light": 205,
+          "rem": 75,
+          "wake": 78
+        },
+    
+        "summary": {
+            stages: {
+                "deep": 55,
+                "light": 176,
+                "rem": 65,
+                "wake": 21
+            }
+            "totalMinutesAsleep": 296,
+            "totalSleep Records": 2,
+            "totalTimeInBed": 317
+        }
+    }
+    
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-log-by-date/)
+
+[Get Sleep Log by Date](/build/reference/web-api/sleep/get-sleep-log-by-date/)
+
+[Get Sleep Log List](/build/reference/web-api/sleep/get-sleep-log-list/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-log-list/)
+---------------latest_code---------------
+
+Context number 1 (score: 0.790641367): 
+## Request
+
+GET |  /1.2/user/[user-id]/sleep/list.json  
+---
+Context number 2 (score: 0.777767777): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2020-05-01&sort=asc&offset=0&limit=1  
+GET
+https://api.fitbit.com/1.2/user/GGNJL9/sleep/list.json?afterDate=2020-05-01&sort=asc&offset=0&limit=1
+
+curl -X GET
+"https://api.fitbit.com/1.2/user/-/sleep/list.json?2020-05-01&sort=asc&offset=0&limit=1"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 3 (score: 0.761916816): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json  
+GET
+https://api.fitbit.com/1.2/user/GGNJL9/sleep/date/2020-01-01/2020-01-05.json
+
+curl -X GET
+"https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 4 (score: 0.756034434): 
+## Request
+
+DELETE |  /1.2/user/[user-id]/sleep/[log-id].json  
+---
+Context number 5 (score: 0.755627036): 
+## Request
+
+GET |  /1.2/user/[user-id]/sleep/goal.json  
+---
+Context number 6 (score: 0.753918588): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01.json  
+GET https://api.fitbit.com/1.2/user/GGNJL9/sleep/date/2020-01-01.json
+
+curl -X GET "https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 7 (score: 0.752290785): 
+## Request
+
+GET |  /1.2/user/[user-id]/sleep/date/[startDate]/[endDate].json  
+---
+Context number 8 (score: 0.748821): 
+## Request
+
+GET |  /1.2/user/[user-id]/sleep/date/[date].json  
+---
+Context number 9 (score: 0.74836421): 
+## Request
+
+POST |  /1.2/user/[user-id]/sleep/goal.json  
+---
+Context number 10 (score: 0.748264372): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1/user/-/body/log/fat/date/2019-02-20/2019-03-01.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/body/log/fat/date/2019-02-20/2019-03-01.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/fat/date/2019-02-20/2019-03-01.json"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 11 (score: 0.748203278): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/goal.json  
+GET https://api.fitbit.com/1.2/user/GGNJL9/sleep/goal.json
+
+curl -X GET "https://api.fitbit.com/1.2/user/-/sleep/goal.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 12 (score: 0.748119414): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/body/log/fat/date/2019-02-20/7d.json  
+GET https://api.fitbit.com/1/user/GGNJL9/body/log/fat/date/2019-02-20/7d.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/fat/date/2019-02-20/7d.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 13 (score: 0.747638): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/body/log/weight/date/2019-03-01/7d.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/body/log/weight/date/2019-03-01/7d.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/weight/date/2019-03-01/7d.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 14 (score: 0.747351348): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1/user/-/activities/list.json?afterDate=2019-01-01&sort=asc&offset=0&limit=2  
+GET
+https://api.fitbit.com/1/user/GGNJL9/activities/list.json?afterDate=2019-01-01&sort=asc&offset=0&limit=2
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/activities/list.json?afterDate=2019-01-01&sort=asc&offset=0&limit=2"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 15 (score: 0.746586621): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1/user/-/body/log/weight/date/2019-02-20/2019-03-01.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/body/log/weight/date/2019-02-20/2019-03-01.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/weight/date/2019-02-20/2019-03-01.json"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 16 (score: 0.74382031): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/body/log/fat/date/2019-03-20.json  
+GET https://api.fitbit.com/1/user/GGNJL9/body/log/fat/date/2019-03-20.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/fat/date/2019-03-20.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 17 (score: 0.743608475): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1.2/user/-/sleep/goal.json?minDuration=600  
+POST https://api.fitbit.com/1.2/user/GGNJL9/sleep/goal.json?minDuration=600
+
+curl -X POST
+"https://api.fitbit.com/1.2/user/-/sleep/goal.json?minDuration=600" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 18 (score: 0.743387878): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST
+https://api.fitbit.com/1.2/user/-/sleep.json?date=2020-02-09&startTime=22:00&duration=720000  
+POST
+https://api.fitbit.com/1.2/user/GGNJL9/sleep.json?date=2020-02-09&startTime=22:00&duration=720000
+
+curl -X POST
+"https://api.fitbit.com/1.2/user/-/sleep.json?date=2020-02-09&startTime=22:00&duration=720000"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 19 (score: 0.742300451): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1/user/-/foods/log/water/date/2019-03-15/2019-03-21.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/foods/log/water/date/2019-03-15/2019-03-21.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/foods/log/water/date/2019-03-15/2019-03-21.json"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 20 (score: 0.74223727): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/body/log/weight/date/2019-03-20.json  
+GET https://api.fitbit.com/1/user/GGNJL9/body/log/weight/date/2019-03-20.json  
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/body/log/weight/date/2019-03-20.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+---------------outdated_natural_language---------------
+
+Context number 1 (score: 0.780551136): 
+Sleep Logs Version 1 (Deprecated) 
+ Overview 
+ These endpoints are deprecated and support for them may end unexpectedly. If
+your application does not depend on the sleep as calculated by these endpoints,
+please use the new  v1.2 sleep endpoints . 
+ 
+ Note : Version 1 APIs  do not  support Sleep Stages data 
+ 
+ Get Sleep Logs by Date 
+ The  Get Sleep Logs by Date  endpoint returns a summary and list of a user's
+sleep log entries (including naps) as well as detailed sleep entry data for a
+given day. 
+ The relationship between sleep log entry properties is expressed with the
+following equation: 
+ 
+ 
+ 
+ Resource URL 
+ 
+ 
+ 
+ URL parameters: 
+       user-id   The ID of the user.
+    Use "-" (dash) for current logged-in user.       date 
+ The date of records to be returned. In the format  yyyy-MM-dd . 
+     
+ Example Request 
+ 
+ 
+ 
+ Example Response 
+ Note:  The text within the brackets  <>  is a descriptive placeholder for a
+value or repeated elements. Also, values for  minuteData  can be  1 
+("asleep"),  2  ("restless"), or  3  ("awake"). 
+ 
+ 
+ 
+ Log Sleep 
+ The  Log Sleep  endpoint creates a log entry for a sleep event and returns a
+response in the format requested. Keep in mind that it is  NOT  possible to
+create overlapping log entries. The  dateOfSleep  in the response for the
+sleep log is the date on which the sleep event ends. 
+ Resource URL 
+ 
+ 
+ 
+       user-id   The ID of the user.
+    Use "-" (dash) for current logged-in user.       
+ POST Parameters 
+       startTime   required 
+ Start time; hours and minutes in the format  HH:mm .     
+ duration   required   Duration in
+    milliseconds.       date   required 
+ Log entry date in the format  yyyy-MM-dd .     
+ 
+ Example Request 
+ 
+ 
+ 
+ Example Response 
+ Note:  The text within the brackets  <>  is a descriptive placeholder for a
+value or repeated elements. 
+ 
+ 
+ 
+ Delete Sleep Log 
+ The  Delete Sleep Log  endpoint deletes a user's sleep log entry with the
+given ID. 
+ Resource URL 
+ 
+ 
+ 
+       user-id   The encoded ID of
+    the user. Use "-" (dash) for current logged-in user.
+Context number 2 (score: 0.748489618): 
+Resource URL 
+ 
+ 
+ 
+       user-id   The encoded ID of
+    the user. Use "-" (dash) for current logged-in user.     
+ log-id   ID of the sleep log to be deleted.   
+   
+ Response 
+ A successful request will return a  204  status code with an empty response
+body. 
+ Sleep Time Series (Deprecated) 
+ Note:  This API has been deprecated with the introduction of version 1.2 of
+the Sleep APIs described above. Sleep Stages data cannot be retrieved with this
+API. If your application requires data consistency while you transition over to
+the version 1.2 Sleep APIs, you can get this data through the  version 1 Get
+Sleep Logs by Date
+endpoint . 
+ The  Get Sleep Time Series  endpoint returns time series data in the specified
+range for a given resource in the format requested using units in the  unit
+system  that corresponds to the Accept-Language
+header provided. 
+ Note:  Even if you provide earlier dates in the request, the response
+retrieves only data since the user's join date or the first log entry date for
+the requested collection. 
+ Resource URL 
+ There are two acceptable formats for retrieving intraday data: 
+ 
+ 
+ 
+       api-version   The API
+    version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+    user.       resource-path   The resource path; see
+    the  Resource Path Options  below for a list of options.     
+ date   The end date of the period specified in the format
+     yyyy-MM-dd  or  today .       period   The
+    range for which data will be returned. Options are  1d, 7d, 30d, 1w, 1m,
+    3m, 6m, 1y,  or  max.       
+ 
+ 
+ 
+       api-version   The API
+   version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+   user.       resource-path   The resource path; see
+   the  Resource Path Options  below for a list of options.     
+ base-date   The range start date, in the format  yyyy-MM-dd 
+   or  today .
+---------------outdated_code---------------
+
+Context number 1 (score: 0.773516536): 
+GET https://api.fitbit.com/1/user/[user-id]/sleep/date/[date].json
+Context number 2 (score: 0.765438378): 
+GET https://api.fitbit.com/1/user/-/sleep/date/2014-09-01.json
+Context number 3 (score: 0.763926804): 
+DELETE https://api.fitbit.com/1/user/[user-id]/sleep/[log-id].jso
+Context number 4 (score: 0.760575652): 
+{
+    "sleep": [
+        {
+            "isMainSleep": true,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T00:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>, // deprecated
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"00:00:00",
+                    "value":"3"
+                },
+                {
+                    "dateTime":"00:01:00",
+                    "value":"2"
+                },
+                {
+                    "dateTime":"00:02:00",
+                    "value":"1"
+                },
+                <...>
+            ]
+        },
+        {
+            "isMainSleep": false,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T14:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>,
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"14:00:00",
+                    "value":"3"
+                },
+                <...>
+            ]
+        }
+    ],
+    "summary":{
+        "totalMinutesAsleep": <value>,
+        "totalSleepRecords": 2,
+        "totalTimeInBed": <value in minutes>
+    }
+}
+Context number 5 (score: 0.758618414): 
+POST https://api.fitbit.com/1/user/-/sleep.json?date=2017-03-27&startTime=19:55&duration=7200000
+Context number 6 (score: 0.75849539): 
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/today/2014-09-01.json
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/2014-09-01/today.json
+Context number 7 (score: 0.755535305): 
+POST https://api.fitbit.com/1/user/[user-id]/sleep.json
+Context number 8 (score: 0.747136533): 
+{
+    "sleep": {
+        "awakeCount": 0,
+        "awakeDuration": 0,
+        "awakeningsCount": 0,
+        "dateOfSleep": "2017-03-28",
+        "duration": 7200000,
+        "efficiency": 100,
+        "isMainSleep": false,
+        "logId": 10183454484,
+        "minuteData": [
+            {
+                "dateTime": "02:32:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:33:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:34:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:35:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:36:00",
+                "value": "1"
+            },
+            <...>
+        ],
+        "minutesAfterWakeup": 0,
+        "minutesAsleep": 120,
+        "minutesAwake": 0,
+        "minutesToFallAsleep": 0,
+        "restlessCount": 0,
+        "restlessDuration": 0,
+        "startTime": "2017-03-28T02:32:00.000",
+        "timeInBed": 120
+    }
+}
+Context number 9 (score: 0.732534349): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[base-date]/[end-date].json
+Context number 10 (score: 0.727774203): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[date]/[period].json
+Context number 11 (score: 0.718285143): 
+sleep/startTime
+sleep/timeInBed
+sleep/minutesAsleep
+sleep/awakeningsCount
+sleep/minutesAwake
+sleep/minutesToFallAsleep
+sleep/minutesAfterWakeup
+sleep/efficiency

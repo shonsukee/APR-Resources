@@ -1,0 +1,20 @@
+---------------User Query---------------
+{
+    "fitbit": {
+        "request_url": "https://api.fitbit.com/oauth/request_token",
+        "authorize_url": "https://www.fitbit.com/oauth/authorize",
+        "access_url": "https://api.fitbit.com/oauth/access_token",
+        "oauth": 1
+    }
+}
+
+---------------Response---------------
+
+{
+    "fitbit": {
+        "request_url": "https://www.fitbit.com/oauth2/token",
+        "authorize_url": "https://www.fitbit.com/oauth2/authorize",
+        "access_url": "https://api.fitbit.com/oauth2/token",
+        "oauth": 2
+    }
+}

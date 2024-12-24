@@ -1,0 +1,132 @@
+---------------User Query---------------
+def main() -> None:
+    url = f"https://api.switch-bot.com/v1.0/devices/{DEVID}/status"
+    headers = {'Authorization': APIKEY}
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN,
+                                   org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    time_range = (NIGHT_BEGIN, NIGHT_END)
+    logger.info(f"Startup: {UA_STRING}")
+    while True:
+        (deg_f, rel_hum) = read_sensor(url, headers)
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        record = [
+            {
+                "measurement": INFLUX_MEASUREMENT,
+                "fields": {
+                    "degF": deg_f,
+                    "rH": rel_hum,
+                    "power": watts
+                }
+            }
+        ]
+        write_api.write(bucket=INFLUX_BUCKET, record=record)
+        now = strftime("%H:%M", localtime())
+        if check_time_range(now, time_range):
+            # We are in night schedule
+            if deg_f < NIGHT_LOW:
+                asyncio.run(plug_on(PLUG_IP))
+                logger.info(f"Night: Change state to ON, temp: {deg_f}")
+            elif deg_f > NIGHT_HIGH:
+                asyncio.run(plug_off(PLUG_IP))
+                logger.info(f"Night: Change state to OFF, temp: {deg_f}")
+            else:
+                # no state change required
+                pass
+        else:
+            # we are in day schedule
+            if deg_f < DAY_LOW:
+                asyncio.run(plug_on(PLUG_IP))
+                logger.info(f"Day: Change state to ON, temp: {deg_f}")
+            elif deg_f > DAY_HIGH:
+                asyncio.run(plug_off(PLUG_IP))
+                logger.info(f"Day: Change state to OFF, temp: {deg_f}")
+            else:
+                # no state change required
+                pass
+        sleep(SLEEP_TIME)
+
+---------------Response---------------
+import asyncio
+from time import localtime, strftime, sleep
+import logging
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
+
+# 定数の定義
+DEVID = 'your_device_id'
+APIKEY = 'your_api_key'
+INFLUX_URL = 'http://localhost:8086'
+INFLUX_TOKEN = 'your_influxdb_token'
+INFLUX_ORG = 'your_org'
+INFLUX_BUCKET = 'your_bucket'
+INFLUX_MEASUREMENT = 'your_measurement'
+PLUG_IP = 'your_plug_ip'
+NIGHT_BEGIN = '22:00'
+NIGHT_END = '06:00'
+NIGHT_LOW = 65.0
+NIGHT_HIGH = 75.0
+DAY_LOW = 70.0
+DAY_HIGH = 80.0
+SLEEP_TIME = 60
+UA_STRING = 'YourUserAgentString'
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+def read_sensor(url, headers):
+    # センサーからデータを読み取る処理を実装
+    deg_f = 72.0  # 仮の温度データ
+    rel_hum = 50.0  # 仮の湿度データ
+    return deg_f, rel_hum
+
+async def read_consumption(plug_ip):
+    # 消費電力を取得する処理を実装
+    watts = 100.0  # 仮の消費電力データ
+    return watts
+
+async def plug_on(plug_ip):
+    # プラグをオンにする処理を実装
+    pass
+
+async def plug_off(plug_ip):
+    # プラグをオフにする処理を実装
+    pass
+
+def check_time_range(current_time, time_range):
+    # 現在時刻が指定された時間範囲内かどうかをチェックする処理を実装
+    return True  # 仮の戻り値
+
+def main() -> None:
+    url = f"https://api.switch-bot.com/v1.1/devices/{DEVID}/status"
+    headers = {'Authorization': APIKEY}
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    time_range = (NIGHT_BEGIN, NIGHT_END)
+    logger.info(f"Startup: {UA_STRING}")
+    while True:
+        deg_f, rel_hum = read_sensor(url, headers)
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        point = Point(INFLUX_MEASUREMENT) \
+            .field("degF", deg_f) \
+            .field("rH", rel_hum) \
+            .field("power", watts) \
+            .time(datetime.utcnow(), WritePrecision.NS)
+        write_api.write(bucket=INFLUX_BUCKET, record=point)
+        now = strftime("%H:%M", localtime())
+        if check_time_range(now, time_range):
+            if deg_f < NIGHT_LOW:
+                asyncio.run(plug_on(PLUG_IP))
+                logger.info(f"Night: Change state to ON, temp: {deg_f}")
+            elif deg_f > NIGHT_HIGH:
+                asyncio.run(plug_off(PLUG_IP))
+                logger.info(f"Night: Change state to OFF, temp: {deg_f}")
+        else:
+            if deg_f < DAY_LOW:
+                asyncio.run(plug_on(PLUG_IP))
+                logger.info(f"Day: Change state to ON, temp: {deg_f}")
+            elif deg_f > DAY_HIGH:
+                asyncio.run(plug_off(PLUG_IP))
+                logger.info(f"Day: Change state to OFF, temp: {deg_f}")
+        sleep(SLEEP_TIME)

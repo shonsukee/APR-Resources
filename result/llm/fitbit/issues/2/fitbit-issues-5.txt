@@ -1,0 +1,22 @@
+---------------User Query---------------
+request_token = client.request_token
+current_user.update(:token => request_token.token, :secret => request_token.secret)
+redirect "http://www.fitbit.com/oauth/authorize?oauth_token=#{current_user.token.to_s}"
+
+---------------Response---------------
+require 'oauth'
+
+consumer = OAuth::Consumer.new(
+  "YOUR_CONSUMER_KEY",
+  "YOUR_CONSUMER_SECRET",
+  {
+    :site => "https://api.fitbit.com",
+    :authorize_path => "/oauth/authorize",
+    :access_token_path => "/oauth/access_token",
+    :request_token_path => "/oauth/request_token"
+  }
+)
+
+request_token = consumer.get_request_token
+current_user.update(:token => request_token.token, :secret => request_token.secret)
+redirect_to request_token.authorize_url

@@ -1,0 +1,21 @@
+---------------User Query---------------
+public OAuthController()
+{
+     _authenticator = new Authenticator(
+     ConfigurationManager.AppSettings["FitbitConsumerKey"],
+     ConfigurationManager.AppSettings["FitbitConsumerSecret"],
+     "http://api.fitbit.com/oauth/request_token",
+     "http://api.fitbit.com/oauth/access_token",
+     "http://api.fitbit.com/oauth/authorize");
+}
+
+---------------Response---------------
+public OAuthController()
+{
+    _authenticator = new Authenticator(
+        ConfigurationManager.AppSettings["FitbitConsumerKey"],
+        ConfigurationManager.AppSettings["FitbitConsumerSecret"],
+        "https://www.fitbit.com/oauth2/authorize",
+        "https://api.fitbit.com/oauth2/token",
+        "https://www.fitbit.com/oauth2/authorize");
+}

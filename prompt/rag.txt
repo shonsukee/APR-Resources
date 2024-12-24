@@ -8,13 +8,10 @@ Update the code to align with the ### Context.
 Always correct deprecated or obsolete code.
 Make all necessary changes within the function provided in the Input Data.
 If the deprecated specification is unknown, output the input data as is.
-
 ### Context
 ${DBから抽出したコンテキスト}
-
 ### Input Data
 ${入力コード}
-
 ### Output Indicator
 Conform all API calls to the latest REST API specification according to ### Context.
 Update the Input Data code as per the latest API specification, making necessary modifications.

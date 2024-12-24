@@ -1,0 +1,3992 @@
+---------------User Query---------------
+switchbot_host = 'https://api.switch-bot.com/v1.0'
+
+
+class SwitchBotClient:
+    def __init__(self, token: str):
+        self.session = requests.Session()
+        self.session.headers['Authorization'] = token
+
+    def request(self, method: str, path: str, **kwargs) -> Any:
+        url = f'{switchbot_host}/{path}'
+        response = self.session.request(method, url, **kwargs)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f'SwitchBot API server returns status {response.status_code}')
+        response_in_json = humps.decamelize(response.json())
+        if response_in_json['status_code'] != 100:
+            raise RuntimeError(
+                f'An error occurred: {response_in_json["message"]}')
+        return response_in_json
+
+
+---------------Response---------------
+```python
+switchbot_host = 'https://api.switch-bot.com/v1.1'
+
+
+class SwitchBotClient:
+    def __init__(self, token: str, secret: str):
+        self.session = requests.Session()
+        self.session.headers['Authorization'] = token
+        self.session.headers['Content-Type'] = 'application/json'
+        
+        # Generate signature components
+        nonce = str(uuid.uuid4())
+        t = int(round(time.time() * 1000))
+        string_to_sign = f'{token}{t}{nonce}'
+        
+        # Create signature
+        sign = base64.b64encode(
+            hmac.new(secret.encode('utf-8'), string_to_sign.encode('utf-8'), hashlib.sha256).digest()
+        ).decode('utf-8')
+        
+        # Add to session headers
+        self.session.headers['sign'] = sign
+        self.session.headers['nonce'] = nonce
+        self.session.headers['t'] = str(t)
+
+    def request(self, method: str, path: str, **kwargs) -> Any:
+        url = f'{switchbot_host}/{path}'
+        response = self.session.request(method, url, **kwargs)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f'SwitchBot API server returns status {response.status_code}')
+        response_in_json = humps.decamelize(response.json())
+        if response_in_json['status_code'] != 100:
+            raise RuntimeError(
+                f'An error occurred: {response_in_json["message"]}')
+        return response_in_json
+```
+
+The changes involve:
+- Updating API version URL from `v1.0` to `v1.1`.
+- Adding extra headers: `sign`, `nonce`, and `t` as required in the latest API version.
+- Generating a signature using token, secret, timestamp (`t`), and nonce.
+
+---------------Similarity Score---------------
+0.7848325379333333
+
+---------------Relevant Context---------------
+---------------latest_natural_language---------------
+
+Context number 1 (score: 0.813611388): 
+SwitchBot API v1.1 
+ 
+ Introduction 
+ About the New Version 
+ Getting Started 
+ Authentication 
+ 
+ Open Token and Secret Key 
+ How to Sign? 
+ 
+ Python 2 example code 
+ Python 3 example code 
+ JavaScript example code 
+ C# example code 
+ Java 11+ example code 
+ PHP example code 
+ 
+ 
+ 
+ 
+ Glossary 
+ API Usage 
+ 
+ Host Domain 
+ Sending a Request 
+ 
+ Content-Type 
+ Request limit 
+ 
+ 
+ Request Header 
+ Standard HTTP Error Codes 
+ 
+ 
+ Devices 
+ 
+ Get device list 
+ 
+ Description 
+ Responses 
+ 
+ Bot 
+ Curtain 
+ Curtain 3 
+ Hub/Hub Plus/Hub Mini/Hub 2 
+ Meter 
+ Meter Plus 
+ Outdoor Meter 
+ Lock 
+ Lock Pro 
+ Keypad 
+ Keypad Touch 
+ Remote 
+ Motion Sensor 
+ Contact Sensor 
+ Water Leak Detector 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Plug 
+ Strip Light 
+ Color Bulb 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Humidifier 
+ Indoor Cam 
+ Pan/Tilt Cam 
+ Pan/Tilt Cam 2K 
+ Blind Tilt 
+ Battery Circulator Fan 
+ Virtual infrared remote devices 
+ 
+ 
+ Sample 
+ 
+ Get all devices 
+ 
+ 
+ 
+ 
+ Get device status 
+ 
+ Description 
+ Path parameters 
+ Responses 
+ 
+ Bot 
+ Curtain 
+ Curtain 3 
+ Meter 
+ Meter Plus 
+ Outdoor Meter 
+ Lock 
+ Lock Pro 
+ Keypad 
+ Keypad Touch 
+ Motion Sensor 
+ Contact Sensor 
+ Water Leak Detector 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Plug 
+ Strip Light 
+ Color Bulb 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Humidifier 
+ Blind Tilt 
+ Hub 2 
+ Battery Circulator Fan 
+ 
+ 
+ Sample 
+ 
+ SwitchBot Meter example 
+ SwitchBot Curtain example 
+ 
+ 
+ 
+ 
+ Send device control commands 
+ 
+ Description 
+ Command set for physical devices 
+ 
+ Bot 
+ Curtain 
+ Curtain 3 
+ Lock 
+ Lock Pro 
+ Humidifier 
+ Plug 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Color Bulb 
+ Strip Light 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Ceiling
+Context number 2 (score: 0.798963308): 
+but not limited to, IoT hobbyists, developers, and gurus to make their own smart home programs or applications. 
+ About the New Version 
+ We will stop adding support for new products on   as we release  . 
+ Hence, we strongly recommend all SwitchBot users to migrate to the new API version because we have improved the authentication method. This will make the communication between your server and the SwitchBot server more secure. 
+ Getting Started 
+ Please follow these steps, 
+ 
+ 
+ Download the SwitchBot app on App Store or Google Play Store 
+ 
+ 
+ Register a SwitchBot account and log in into your account 
+ 
+ 
+ Generate an Open Token within the app
+For app version ≥ V9.0,
+a) Go to Profile > Preferences > About
+b) Tap App Version 10 times. Developer Options will show up
+c) Tap Developer Options
+d) Tap Get Token 
+ 
+ 
+ For app version < V9.0,
+a) Go to Profile > Preferences
+b) Tap App Version 10 times. Developer Options will show up
+c) Tap Developer Options
+d) Tap Get Token 
+ 
+ Roll up your sleeves and get your hands dirty with SwitchBot OpenAPI! 
+ 
+ Authentication 
+ Open Token and Secret Key 
+ Note: You must update the app to the latest version,   or later, in order to get the secret key. 
+ In SwitchBot API  , the authentication method has been improved. In order to gain access to private data through the API, you must generate a unique signature using a token and a secret key. When you make a request, the Authorization token and signature will be validated simultaneously. 
+ You as a developer will then be able to add, delete, edit, and look up your data including profile data and data associated with the devices that have been added to your SwitchBot account. 
+ To continue to use SwitchBot API  , refer to the legacy document. 
+ How to Sign? 
+ We have attached some scripts for you to quickly generate a sign. If you prefer to write your own script or routine, here is the procedure.
+Context number 3 (score: 0.794353485): 
+developers, and gurus to make their own smart home programs or applications. 
+ About the New Version 
+ We will stop adding support for new products on  v1.0  as we release  v1.1 . 
+ Hence, we strongly recommend all SwitchBot users to migrate to the new API version because we have improved the authentication method. This will make the communication between your server and the SwitchBot server more secure. 
+ Getting Started 
+ Please follow these steps, 
+ 
+ 
+ Download the SwitchBot app on App Store or Google Play Store 
+ 
+ 
+ Register a SwitchBot account and log in into your account 
+ 
+ 
+ Generate an Open Token within the app
+For app version ≥ V9.0,
+a) Go to Profile > Preferences > About
+b) Tap App Version 10 times. Developer Options will show up
+c) Tap Developer Options
+d) Tap Get Token 
+ 
+ 
+ For app version < V9.0,
+a) Go to Profile > Preferences
+b) Tap App Version 10 times. Developer Options will show up
+c) Tap Developer Options
+d) Tap Get Token 
+ 
+ Roll up your sleeves and get your hands dirty with SwitchBot OpenAPI! 
+ 
+ Authentication 
+ Open Token and Secret Key 
+ Note: You must update the app to the latest version,  V6.14  or later, in order to get the secret key. 
+ In SwitchBot API  v1.1 , the authentication method has been improved. In order to gain access to private data through the API, you must generate a unique signature using a token and a secret key. When you make a request, the Authorization token and signature will be validated simultaneously. 
+ You as a developer will then be able to add, delete, edit, and look up your data including profile data and data associated with the devices that have been added to your SwitchBot account. 
+ To continue to use SwitchBot API  v1.0 , refer to the legacy document. 
+ How to Sign? 
+ We have attached some scripts for you to quickly generate a sign. If you prefer to write your own script or routine, here is the procedure.
+Context number 4 (score: 0.786533654): 
+Battery Circulator Fan 
+ W3800510 
+ 
+ 
+ 
+ 
+  Cloud Services 
+ 
+ Important note: Beyond V9.0, there will NOT be a Cloud Services option in the app. You will see Third-party Services instead. Please read this article for more information,  https://support.switch-bot.com/hc/en-us/articles/7257579858455 
+ 
+ A SwitchBot app feature, which appears in the app <V9.0 that 
+ 
+ Enables SwitchBot products to be discovered and communicated with third-party services such as Home Assistant, Alexa, Google Home, IFTTT, SmartThings, and so forth 
+ Allows users to create customized smart scenes and  widgets. For BLE-based devices such as Bot and Curtain 
+ You MUST first add a SwitchBot Hub such as Hub 2, Hub Mini with Matter Enabled, or Hub Mini 
+ Then enable Cloud Services on the Settings page in order to make use of the web API! 
+ 
+ API Usage 
+ Host Domain 
+ 
+ Sending a Request 
+ The following request types are supported, 
+ 
+ GET 
+ PUT 
+ POST 
+ DELETE 
+ 
+ Content-Type 
+ For   requests, use   as the  
+ Request limit 
+ The amount of API calls per day is limited to  10000  times. Going over that limit will return "Unauthorized." 
+ Request Header 
+ The following parameters need to be included into the header, 
+ 
+ 
+ 
+ Parameter 
+ Type 
+ Location 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ Authorization 
+ String 
+ header 
+ Yes 
+ Open Token acquired 
+ 
+ 
+ sign 
+ String 
+ header 
+ Yes 
+ A signature generated from the token and secret key using a specific algorithm. 
+ 
+ 
+ t 
+ Long 
+ header 
+ Yes 
+ A 13 digit timestamp (standard time). 
+ 
+ 
+ nonce 
+ Long 
+ header 
+ Yes 
+ A random UUID generated by developers themselves to blend into the string to sign. 
+ 
+ 
+ 
+ Standard HTTP Error Codes 
+ The following table lists the most common HTTP error response, 
+ 
+ 
+ 
+ Code 
+ Name 
+ Description 
+ 
+ 
+ 
+ 
+ 400 
+ Bad Request 
+ The client has issued an invalid request. This is commonly used to specify validation errors in a request payload. 
+ 
+ 
+ 401 
+ Unauthorized 
+ Authorization for the API is required, but the request has not been authenticated. 
+ 
+ 
+ 403 
+ Forbidden 
+ The request has been authenticated but does not have appropriate permissions, or a requested resource is not found. 
+ 
+ 
+ 404 
+ Not Found 
+ Specifies the requested path does not exist.
+Context number 5 (score: 0.781528354): 
+Circulator Fan 
+ W3800510 
+ 
+ 
+ 
+ 
+ Legacy  Cloud Services 
+ 
+ Important note: Beyond V9.0, there will NOT be a Cloud Services option in the app. You will see Third-party Services instead. Please read this article for more information,  https://support.switch-bot.com/hc/en-us/articles/7257579858455 
+ 
+ A SwitchBot app feature, which appears in the app <V9.0 that 
+ 
+ Enables SwitchBot products to be discovered and communicated with third-party services such as Home Assistant, Alexa, Google Home, IFTTT, SmartThings, and so forth 
+ Allows users to create customized smart scenes and  widgets. For BLE-based devices such as Bot and Curtain 
+ You MUST first add a SwitchBot Hub such as Hub 2, Hub Mini with Matter Enabled, or Hub Mini 
+ Then enable Cloud Services on the Settings page in order to make use of the web API! 
+ 
+ API Usage 
+ Host Domain 
+ 
+ Sending a Request 
+ The following request types are supported, 
+ 
+ GET 
+ PUT 
+ POST 
+ DELETE 
+ 
+ Content-Type 
+ For  POST  requests, use  application/json; charset=utf8  as the  Content-Type 
+ Request limit 
+ The amount of API calls per day is limited to  10000  times. Going over that limit will return "Unauthorized." 
+ Request Header 
+ The following parameters need to be included into the header, 
+ 
+ 
+ 
+ Parameter 
+ Type 
+ Location 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ Authorization 
+ String 
+ header 
+ Yes 
+ Open Token acquired 
+ 
+ 
+ sign 
+ String 
+ header 
+ Yes 
+ A signature generated from the token and secret key using a specific algorithm. 
+ 
+ 
+ t 
+ Long 
+ header 
+ Yes 
+ A 13 digit timestamp (standard time). 
+ 
+ 
+ nonce 
+ Long 
+ header 
+ Yes 
+ A random UUID generated by developers themselves to blend into the string to sign. 
+ 
+ 
+ 
+ Standard HTTP Error Codes 
+ The following table lists the most common HTTP error response, 
+ 
+ 
+ 
+ Code 
+ Name 
+ Description 
+ 
+ 
+ 
+ 
+ 400 
+ Bad Request 
+ The client has issued an invalid request. This is commonly used to specify validation errors in a request payload. 
+ 
+ 
+ 401 
+ Unauthorized 
+ Authorization for the API is required, but the request has not been authenticated. 
+ 
+ 
+ 403 
+ Forbidden 
+ The request has been authenticated but does not have appropriate permissions, or a requested resource is not found. 
+ 
+ 
+ 404 
+ Not Found 
+ Specifies the requested path does not exist.
+Context number 6 (score: 0.778488815): 
+403 
+ Forbidden 
+ The request has been authenticated but does not have appropriate permissions, or a requested resource is not found. 
+ 
+ 
+ 404 
+ Not Found 
+ Specifies the requested path does not exist. 
+ 
+ 
+ 406 
+ Not Acceptable 
+ The client has requested a MIME type via the Accept header for a value not supported by the server. 
+ 
+ 
+ 415 
+ Unsupported Media Type 
+ The client has defined a contentType header that is not supported by the server. 
+ 
+ 
+ 422 
+ Unprocessable Entity 
+ The client has made a valid request, but the server cannot process it. This is often used for APIs for which certain limits have been exceeded. 
+ 
+ 
+ 429 
+ Too Many Requests 
+ The client has exceeded the number of requests allowed for a given time window. 
+ 
+ 
+ 500 
+ Internal Server Error 
+ An unexpected error on the SmartThings servers has occurred. These errors should be rare. 
+ 
+ 
+ 
+ Devices 
+ The devices API is used to access the properties and states of SwitchBot devices and to send control commands to those devices. 
+ Get device list 
+ 
+ Description 
+ Get a list of devices, which include physical devices and virtual infrared remote devices that have been added to the current user's account. 
+ 
+ Note: For devices that communicate via BLE, please enable Cloud Services on SwitchBot app first. 
+ 
+ Physical devices refer to the following SwitchBot products, 
+ 
+ Hub 
+ Hub Plus 
+ Hub Mini 
+ Bot 
+ Curtain 
+ Plug 
+ Meter 
+ Motion Sensor 
+ Contact Sensor 
+ Color Bulb 
+ Humidifier 
+ Smart Fan 
+ Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Lock 
+ Meter Plus (JP) 
+ Meter Plus (US) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Keypad 
+ Keypad Touch 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Blind Tilt 
+ Hub 2 
+ Outdoor Meter 
+ Battery Circulator Fan 
+ Curtain 3 
+ Lock Pro 
+ Floor Cleaning Robot S10 
+ Water Leak Detector 
+  Mini Robot Vacuum K10+ 
+  Mini Robot Vacuum K10+ Pro 
+ 
+ Virtual infrared remote devices refer to virtual devices that are used to simulate infrared signals of a home appliance remote control. A SwitchBot Hub Plus, Hub Mini, Hub 2, or Ceiling Light is required in order to be able to create these virtual devices within the app.
+Context number 7 (score: 0.778373778): 
+403 
+ Forbidden 
+ The request has been authenticated but does not have appropriate permissions, or a requested resource is not found. 
+ 
+ 
+ 404 
+ Not Found 
+ Specifies the requested path does not exist. 
+ 
+ 
+ 406 
+ Not Acceptable 
+ The client has requested a MIME type via the Accept header for a value not supported by the server. 
+ 
+ 
+ 415 
+ Unsupported Media Type 
+ The client has defined a contentType header that is not supported by the server. 
+ 
+ 
+ 422 
+ Unprocessable Entity 
+ The client has made a valid request, but the server cannot process it. This is often used for APIs for which certain limits have been exceeded. 
+ 
+ 
+ 429 
+ Too Many Requests 
+ The client has exceeded the number of requests allowed for a given time window. 
+ 
+ 
+ 500 
+ Internal Server Error 
+ An unexpected error on the SmartThings servers has occurred. These errors should be rare. 
+ 
+ 
+ 
+ Devices 
+ The devices API is used to access the properties and states of SwitchBot devices and to send control commands to those devices. 
+ Get device list 
+ 
+ Description 
+ Get a list of devices, which include physical devices and virtual infrared remote devices that have been added to the current user's account. 
+ 
+ Note: For devices that communicate via BLE, please enable Cloud Services on SwitchBot app first. 
+ 
+ Physical devices refer to the following SwitchBot products, 
+ 
+ Hub 
+ Hub Plus 
+ Hub Mini 
+ Bot 
+ Curtain 
+ Plug 
+ Meter 
+ Motion Sensor 
+ Contact Sensor 
+ Color Bulb 
+ Humidifier 
+ Smart Fan 
+ Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Lock 
+ Meter Plus (JP) 
+ Meter Plus (US) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Keypad 
+ Keypad Touch 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Blind Tilt 
+ Hub 2 
+ Outdoor Meter 
+ Battery Circulator Fan 
+ Curtain 3 
+ Lock Pro 
+ Floor Cleaning Robot S10 
+ Water Leak Detector 
+ new  Mini Robot Vacuum K10+ 
+ new  Mini Robot Vacuum K10+ Pro 
+ 
+ Virtual infrared remote devices refer to virtual devices that are used to simulate infrared signals of a home appliance remote control. A SwitchBot Hub Plus, Hub Mini, Hub 2, or Ceiling Light is required in order to be able to create these virtual devices within the app.
+Context number 8 (score: 0.77049607): 
+A SwitchBot Hub Plus, Hub Mini, Hub 2, or Ceiling Light is required in order to be able to create these virtual devices within the app. The types of appliances supported include, 
+ 
+ Air Conditioner 
+ TV 
+ Light 
+ Streamer 
+ Set Top Box 
+ DVD Player 
+ Fan 
+ Projector 
+ Camera 
+ Air Purifier 
+ Speaker 
+ Water Heater 
+ Robot Vacuum Cleaner 
+ Others 
+ 
+ Responses 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The   object contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceList 
+ Array 
+ a list of physical devices 
+ 
+ 
+ infraredRemoteList 
+ Array 
+ a list of virtual infrared remote devices 
+ 
+ 
+ 
+ The response may contain the following codes and messages, 
+ 
+ 
+ 
+ Status Code 
+ Body Content 
+ Message 
+ Description 
+ 
+ 
+ 
+ 
+ 100 
+ Device list object 
+ success 
+ Returns an object that contains two device lists 
+ 
+ 
+ n/a 
+ n/a 
+ Unauthorized 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ n/a 
+ System error 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ The   array contains a list of objects with the following key-value attributes, 
+ Bot 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type.  Bot 
+ 
+ 
+ enableCloudService 
+ Boolean 
+ determines if Cloud Service is enabled or not for the current device 
+ 
+ 
+ hubDeviceId 
+ String 
+ device's parent Hub ID 
+ 
+ 
+ 
+ Curtain 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type.
+Context number 9 (score: 0.766859889): 
+A SwitchBot Hub Plus, Hub Mini, Hub 2, or Ceiling Light is required in order to be able to create these virtual devices within the app. The types of appliances supported include, 
+ 
+ Air Conditioner 
+ TV 
+ Light 
+ Streamer 
+ Set Top Box 
+ DVD Player 
+ Fan 
+ Projector 
+ Camera 
+ Air Purifier 
+ Speaker 
+ Water Heater 
+ Robot Vacuum Cleaner 
+ Others 
+ 
+ Responses 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The  body  object contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceList 
+ Array 
+ a list of physical devices 
+ 
+ 
+ infraredRemoteList 
+ Array 
+ a list of virtual infrared remote devices 
+ 
+ 
+ 
+ The response may contain the following codes and messages, 
+ 
+ 
+ 
+ Status Code 
+ Body Content 
+ Message 
+ Description 
+ 
+ 
+ 
+ 
+ 100 
+ Device list object 
+ success 
+ Returns an object that contains two device lists 
+ 
+ 
+ n/a 
+ n/a 
+ Unauthorized 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ n/a 
+ System error 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ The  deviceList  array contains a list of objects with the following key-value attributes, 
+ Bot 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type.  Bot 
+ 
+ 
+ enableCloudService 
+ Boolean 
+ determines if Cloud Service is enabled or not for the current device 
+ 
+ 
+ hubDeviceId 
+ String 
+ device's parent Hub ID 
+ 
+ 
+ 
+ Curtain 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type.
+Context number 10 (score: 0.75932318): 
+Physical devices refer to the following SwitchBot products, 
+ 
+ Bot 
+ Plug 
+ Curtain 
+ Meter 
+ Motion Sensor 
+ Contact Sensor 
+ Color Bulb 
+ Humidifier 
+ Smart Fan 
+ Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Lock 
+ Meter Plus (JP) 
+ Meter Plus (US) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Keypad (MUST enable Cloud Service first) 
+ Keypad Touch (MUST enable Cloud Service first) 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Hub 2 
+ Outdoor Meter 
+ Battery Circulator Fan 
+ Lock Pro 
+ Floor Cleaning Robot S10 
+ Water Leak Detector 
+  Mini Robot Vacuum K10+ 
+  Mini Robot Vacuum K10+ Pro 
+ 
+ Path parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ Yes 
+ device ID 
+ 
+ 
+ 
+ Responses 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The reponses may contain the following codes and message, 
+ 
+ 
+ 
+ Status Code 
+ Body Content 
+ Message 
+ Description 
+ 
+ 
+ 
+ 
+ 100 
+ Device list object 
+ success 
+ Returns an object that contains two device lists 
+ 
+ 
+ n/a 
+ n/a 
+ Unauthorized 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ n/a 
+ System error 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ The   object contains the following properties, 
+ Bot 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceType 
+ String 
+ device type.  Bot 
+ 
+ 
+ power 
+ String 
+ ON/OFF state 
+ 
+ 
+ battery 
+ Integer 
+ the current battery level, 0-100 
+ 
+ 
+ version 
+ String 
+ the current firmware version, e.g. V6.3 
+ 
+ 
+ deviceMode 
+ String 
+ pressMode ,  switchMode , or  customizeMode 
+ 
+ 
+ hubDeviceId 
+ String 
+ device's parent Hub ID 
+ 
+ 
+ 
+ Curtain 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceType 
+ String 
+ device type.
+Context number 11 (score: 0.758221507): 
+User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ Sample 
+ Execute a scene 
+ Request 
+ 
+ Response 
+ 
+ Webhook 
+ Configure webhook 
+ Description 
+ Configure the url that all the webhook events will be sent to 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to 
+ 
+ 
+ deviceList 
+ String 
+ the list of device ids, currently only supports "ALL" 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ Sample 
+ 
+ Get webhook configuration 
+ Description 
+ Get the current configuration info of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions, currently supports "queryUrl", "queryDetails" 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to. you need to specify the url when using queryDetails 
+ 
+ 
+ 
+ queryUrl 
+ Head 
+ 
+ Body 
+ 
+ queryDetails 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ queryUrl 
+ 
+ queryDetails 
+ 
+ Update webhook configuration 
+ Description 
+ Update the configuration of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ config 
+ Object 
+ the configuration details you want to update. you can change the current url or enable/disable the webhook. refer to the example below 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ 
+ Delete webhook 
+ Description 
+ Delete the configuration of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ 
+ Receive events from webhook 
+ When an event gets triggered, SwitchBot server will send a  POST  request to the url you have configured. Refer to the table below for a list of products that support webhook.
+Context number 12 (score: 0.756772399): 
+Physical devices refer to the following SwitchBot products, 
+ 
+ Bot 
+ Plug 
+ Curtain 
+ Meter 
+ Motion Sensor 
+ Contact Sensor 
+ Color Bulb 
+ Humidifier 
+ Smart Fan 
+ Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Lock 
+ Meter Plus (JP) 
+ Meter Plus (US) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Keypad (MUST enable Cloud Service first) 
+ Keypad Touch (MUST enable Cloud Service first) 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Hub 2 
+ Outdoor Meter 
+ Battery Circulator Fan 
+ Lock Pro 
+ Floor Cleaning Robot S10 
+ Water Leak Detector 
+ new  Mini Robot Vacuum K10+ 
+ new  Mini Robot Vacuum K10+ Pro 
+ 
+ Path parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ Yes 
+ device ID 
+ 
+ 
+ 
+ Responses 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The reponses may contain the following codes and message, 
+ 
+ 
+ 
+ Status Code 
+ Body Content 
+ Message 
+ Description 
+ 
+ 
+ 
+ 
+ 100 
+ Device list object 
+ success 
+ Returns an object that contains two device lists 
+ 
+ 
+ n/a 
+ n/a 
+ Unauthorized 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ n/a 
+ System error 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ The  body  object contains the following properties, 
+ Bot 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceType 
+ String 
+ device type.  Bot 
+ 
+ 
+ power 
+ String 
+ ON/OFF state 
+ 
+ 
+ battery 
+ Integer 
+ the current battery level, 0-100 
+ 
+ 
+ version 
+ String 
+ the current firmware version, e.g. V6.3 
+ 
+ 
+ deviceMode 
+ String 
+ pressMode ,  switchMode , or  customizeMode 
+ 
+ 
+ hubDeviceId 
+ String 
+ device's parent Hub ID 
+ 
+ 
+ 
+ Curtain 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceType 
+ String 
+ device type.
+Context number 13 (score: 0.755570292): 
+Plug Mini (JP) 
+ Color Bulb 
+ Strip Light 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Keypad 
+ Keypad Touch 
+ Blind Tilt 
+ Battery Circulator Fan 
+ 
+ 
+ Command set for virtual infrared remote devices 
+ Path parameters 
+ Request body parameters 
+ Response 
+ Errors 
+ Sample 
+ 
+ Floor Cleaning Robot S10 example 
+ Keypad example 
+ Bot example 
+ Infrared remote device example 
+ 
+ 
+ 
+ 
+ 
+ 
+ Scenes 
+ 
+ Get scene list 
+ 
+ Description 
+ Response 
+ Errors 
+ Sample 
+ 
+ Get all scenes 
+ 
+ 
+ 
+ 
+ Execute manual scenes 
+ 
+ Description 
+ Path parameters 
+ Errors 
+ Sample 
+ 
+ Execute a scene 
+ 
+ 
+ 
+ 
+ 
+ 
+ Webhook 
+ 
+ Configure webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Get webhook configuration 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ Response 
+ 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ 
+ 
+ Update webhook configuration 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Delete webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Receive events from webhook 
+ 
+ Bot 
+ Curtain 
+ Curtain 3 
+ Motion Sensor 
+ Contact Sensor 
+ Water Leak Detector 
+ Meter 
+ Meter Plus 
+ Outdoor Meter 
+ Lock 
+ Lock Pro 
+ Indoor Cam 
+ Pan/Tilt Cam 
+ Color Bulb 
+ LED Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Keypad 
+ 
+ Create a passcode 
+ Delete a passcode 
+ 
+ 
+ Keypad Touch 
+ 
+ Create a passcode 
+ Delete a passcode 
+ 
+ 
+ Hub 2 
+ Battery Circulator Fan 
+ 
+ 
+ 
+ 
+ 
+ Introduction 
+ This document describes a collection of SwitchBot API methods, examples, and best practices for, but not limited to, IoT hobbyists, developers, and gurus to make their own smart home programs or applications. 
+ About the New Version 
+ We will stop adding support for new products on  v1.0  as we release  v1.1 .
+Context number 14 (score: 0.754621565): 
+Plug Mini (JP) 
+ Color Bulb 
+ Strip Light 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Keypad 
+ Keypad Touch 
+ Blind Tilt 
+ Battery Circulator Fan 
+ 
+ 
+ Command set for virtual infrared remote devices 
+ Path parameters 
+ Request body parameters 
+ Response 
+ Errors 
+ Sample 
+ 
+ Floor Cleaning Robot S10 example 
+ Keypad example 
+ Bot example 
+ Infrared remote device example 
+ 
+ 
+ 
+ 
+ 
+ 
+ Scenes 
+ 
+ Get scene list 
+ 
+ Description 
+ Response 
+ Errors 
+ Sample 
+ 
+ Get all scenes 
+ 
+ 
+ 
+ 
+ Execute manual scenes 
+ 
+ Description 
+ Path parameters 
+ Errors 
+ Sample 
+ 
+ Execute a scene 
+ 
+ 
+ 
+ 
+ 
+ 
+ Webhook 
+ 
+ Configure webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Get webhook configuration 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ Response 
+ 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ 
+ 
+ Update webhook configuration 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Delete webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Receive events from webhook 
+ 
+ Bot 
+ Curtain 
+ Curtain 3 
+ Motion Sensor 
+ Contact Sensor 
+ Water Leak Detector 
+ Meter 
+ Meter Plus 
+ Outdoor Meter 
+ Lock 
+ Lock Pro 
+ Indoor Cam 
+ Pan/Tilt Cam 
+ Color Bulb 
+ LED Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Robot Vacuum Cleaner S1 
+ Robot Vacuum Cleaner S1 Plus 
+ Mini Robot Vacuum K10+ 
+ Mini Robot Vacuum K10+ Pro 
+ Floor Cleaning Robot S10 
+ Ceiling Light 
+ Ceiling Light Pro 
+ Keypad 
+ 
+ Create a passcode 
+ Delete a passcode 
+ 
+ 
+ Keypad Touch 
+ 
+ Create a passcode 
+ Delete a passcode 
+ 
+ 
+ Hub 2 
+ Battery Circulator Fan 
+ 
+ 
+ 
+ 
+ 
+ Introduction 
+ This document describes a collection of SwitchBot API methods, examples, and best practices for, but not limited to, IoT hobbyists, developers, and gurus to make their own smart home programs or applications. 
+ About the New Version 
+ We will stop adding support for new products on   as we release  .
+Context number 15 (score: 0.748057961): 
+Hub 2 
+ 
+ 
+ hubDeviceId 
+ String 
+ Hub ID, equivalent to device ID 
+ 
+ 
+ temperature 
+ Float 
+ temperature in celsius 
+ 
+ 
+ lightLevel 
+ Integer 
+ the level of illuminance of the ambience light, 1~20 
+ 
+ 
+ version 
+ String 
+ the current firmware version, e.g. V4.2 
+ 
+ 
+ humidity 
+ Integer 
+ humidity percentage 
+ 
+ 
+ 
+ Battery Circulator Fan 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type.  Battery Circulator Fan 
+ 
+ 
+ mode 
+ String 
+ fan mode. direct mode:  direct ; natural mode: "natural"; sleep mode: "sleep"; ultra quiet mode: "baby" 
+ 
+ 
+ version 
+ String 
+ the current firmware version, e.g. V4.2 
+ 
+ 
+ battery 
+ Integer 
+ the current battery level 
+ 
+ 
+ power 
+ String 
+ ON/OFF state 
+ 
+ 
+ nightStatus 
+ Integer 
+ set nightlight status. turn off:  off ; mode 1:  1 ; mode 2:  2 
+ 
+ 
+ oscillation 
+ String 
+ set horizontal oscillation. turn on:  on ; turn off:  off 
+ 
+ 
+ verticalOscillation 
+ String 
+ set vertical oscillation. turn on:  on ; turn off:  off 
+ 
+ 
+ chargingStatus 
+ String 
+ battery charge status.  charging  or  uncharged 
+ 
+ 
+ fanSpeed 
+ Integer 
+ fan speed. 1~100 
+ 
+ 
+ 
+ Sample 
+ SwitchBot Meter example 
+ Request the status of a SwitchBot Thermometer and Hygrometer 
+ Request 
+ 
+ Response 
+ 
+ SwitchBot Curtain example 
+ Request the status of a SwitchBot Curtain 
+ Request 
+ 
+ Response 
+ 
+ Send device control commands 
+ 
+ Description 
+ Send control commands to physical devices and virtual infrared remote devices. 
+ Command set for physical devices 
+ Bot 
+ 
+ 
+ 
+ deviceType 
+ commandType 
+ Command 
+ command parameter 
+ Description 
+ 
+ 
+ 
+ 
+ Bot 
+ command 
+ turnOff 
+ default 
+ set to OFF state 
+ 
+ 
+ Bot 
+ command 
+ turnOn 
+ default 
+ set to ON state 
+ 
+ 
+ Bot 
+ command 
+ press 
+ default 
+ trigger press 
+ 
+ 
+ 
+ Curtain 
+ 
+ 
+ 
+ deviceType 
+ commandType 
+ Command 
+ command parameter 
+ Description 
+ 
+ 
+ 
+ 
+ Curtain 
+ command 
+ setPosition 
+ index0,mode0,position0 e.g.
+Context number 16 (score: 0.740533352): 
+How to Sign? 
+ We have attached some scripts for you to quickly generate a sign. If you prefer to write your own script or routine, here is the procedure. 
+ 
+ Print the 13 digit timestamp and concatenate it with your  token 
+ Create a signature using your  secret  and the string produced in the previous step 
+ Convert the signature to upper case 
+ 
+ For instance, 
+ 
+ Python 2 example code 
+ 
+ Python 3 example code 
+ 
+ JavaScript example code 
+ 
+ C# example code 
+ 
+ Java 11+ example code 
+ 
+ PHP example code 
+ 
+ Glossary 
+ The following table provides definitions to the terms to be frequently mentioned in the subsequent sections. 
+ 
+ 
+ 
+ Term 
+ Description 
+ Model No. 
+ Availability 
+ 
+ 
+ 
+ 
+ Hub Mini 
+ Short for SwitchBot Hub Mini 
+ W0202200 
+ 
+ 
+ 
+ Hub Plus 
+ Short for SwitchBot Hub Plus 
+ SwitchBot Hub S1 
+ 
+ 
+ 
+ Hub 2 
+ Short for SwitchBot Hub 2 
+ W3202100 
+ 
+ 
+ 
+ Bot 
+ Short for SwitchBot Bot 
+ SwitchBot S1 
+ 
+ 
+ 
+ Curtain 
+ Short for SwitchBot Curtain 
+ W0701600 
+ 
+ 
+ 
+ Curtain 3 
+ Short for SwitchBot Curtain 3 
+ W2400000 
+ 
+ 
+ 
+ Plug 
+ Short for SwitchBot Plug 
+ SP11 
+ Currently only available in Japan 
+ 
+ 
+ Meter 
+ Short for SwitchBot Thermometer and Hygrometer 
+ SwitchBot MeterTH S1 
+ 
+ 
+ 
+ Meter Plus (JP) 
+ Short for SwitchBot Thermometer and Hygrometer Plus (JP). 
+ W2201500 
+ Only available in Japan 
+ 
+ 
+ Meter Plus (US) 
+ Short for SwitchBot Thermometer and Hygrometer Plus (US) 
+ W2301500 
+ Only available in US 
+ 
+ 
+ Outdoor Meter 
+ Short for Indoor/Outdoor Thermo-Hygrometer 
+ W3400010 
+ 
+ 
+ 
+ Motion Sensor 
+ Short for SwitchBot Motion Sensor 
+ W1101500 
+ 
+ 
+ 
+ Contact Sensor 
+ Short for SwitchBot Contact Sensor 
+ W1201500 
+ 
+ 
+ 
+ Water Leak Detector 
+ Short for SwitchBot Water Leak Detector 
+ W4402000 
+ 
+ 
+ 
+ Color Bulb 
+ Short for SwitchBot Color Bulb 
+ W1401400 
+ 
+ 
+ 
+ Strip Light 
+ Short for SwitchBot LED Strip Light 
+ W1701100 
+ 
+ 
+ 
+ Plug Mini (US) 
+ Short for SwitchBot Plug Mini (US) 
+ W1901400 and W1901401 
+ Only available in US 
+ 
+ 
+ Plug Mini (JP) 
+ Short for SwitchBot Plug
+Context number 17 (score: 0.73688966): 
+, the number of cycles,  , in theory. 
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ addWaterForHumi 
+ default 
+ refill the mind blowing Evaporative Humidifier (Auto-refill). 
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ pause 
+ default 
+ pause. 
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ dock 
+ default 
+ return to Auto-empty Station and charge. 
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ setVolume 
+ 
+ set volume,  
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ selfClean 
+  or   or  
+ mode  , wash the mop. mode  , dry itself.  mode  , terminate. 
+ 
+ 
+ Floor Cleaning Robot S10 
+ command 
+ changeParam 
+ {"fanLevel": fan_level_int, "waterLevel": water_level_int, "times": clean_cycle_int} 
+ , the vacuum level,  . , the mop moisture level,  . , the number of cycles,  , in theory. 
+ 
+ 
+ 
+ Ceiling Light 
+ 
+ 
+ 
+ deviceType 
+ commandType 
+ Command 
+ command parameter 
+ Description 
+ 
+ 
+ 
+ 
+ Ceiling Light 
+ command 
+ turnOn 
+ default 
+ set to ON state 
+ 
+ 
+ Ceiling Light 
+ command 
+ turnOff 
+ default 
+ set to OFF state 
+ 
+ 
+ Ceiling Light 
+ command 
+ toggle 
+ default 
+ toggle state 
+ 
+ 
+ Ceiling Light 
+ command 
+ setBrightness 
+ 
+ set brightness 
+ 
+ 
+ Ceiling Light 
+ command 
+ setColorTemperature 
+ 
+ set the color temperature 
+ 
+ 
+ 
+ Ceiling Light Pro 
+ 
+ 
+ 
+ deviceType 
+ commandType 
+ Command 
+ command parameter 
+ Description 
+ 
+ 
+ 
+ 
+ Ceiling Light Pro 
+ command 
+ turnOn 
+ default 
+ set to ON state 
+ 
+ 
+ Ceiling Light Pro 
+ command 
+ turnOff 
+ default 
+ set to OFF state 
+ 
+ 
+ Ceiling Light Pro 
+ command 
+ toggle 
+ default 
+ toggle state 
+ 
+ 
+ Ceiling Light Pro 
+ command 
+ setBrightness 
+ 
+ set brightness 
+ 
+ 
+ Ceiling Light Pro 
+ command 
+ setColorTemperature 
+ 
+ set the color temperature 
+ 
+ 
+ 
+ Keypad 
+ The control commands for this product work differently than the other products. Due to security concerns, the passcodes are stored locally. This mechanism dramatically prolongs the time needed to successfully create a passcode and get the correct result through the Web API. Hence, the actual results of the following commands are returned from the SwitchBot server asynchronously and are delivered through a webhook. 
+ You need to configure a webhook to receive the correct result. Refer to this product's webhook definition.
+Context number 18 (score: 0.736712456): 
+User permission is denied due to invalid token. 
+ 
+ 
+ 151 
+ device type error 
+ 
+ 
+ 152 
+ device not found 
+ 
+ 
+ 160 
+ command is not supported 
+ 
+ 
+ 161 
+ device offline 
+ 
+ 
+ 171 
+ hub device is offline 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server. Or command format is invalid. 
+ 
+ 
+ 
+ Sample 
+ Floor Cleaning Robot S10 example 
+ Clean with vacuum mode 
+ Request 
+ 
+ 
+ Response 
+ 
+ Change the cleaning settings 
+ Request 
+ 
+ 
+ Response 
+ 
+ Keypad example 
+ Create a temporary passcode 
+ Request 
+ 
+ 
+ Response 
+ 
+ Bot example 
+ Turn a Bot on 
+ Request 
+ 
+ 
+ Response 
+ 
+ Set the color value of a Color Bulb
+Request 
+ 
+ 
+ Response 
+ 
+ Infrared remote device example 
+ Set an Air Conditioner 
+ Request 
+ 
+ 
+ Response 
+ 
+ Trigger a customized button 
+ Request 
+ 
+ 
+ Response 
+ 
+ Scenes 
+ The scenes API is used to access the smart scenes created by a user and to execute manual scenes. 
+ Get scene list 
+ 
+ Description 
+ Get a list of manual scenes created by the current user. 
+ Response 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The body object contains a list of objects, which has the following properties, 
+ 
+ 
+ 
+ Key 
+ Type 
+ Description 
+ 
+ 
+ 
+ 
+ sceneId 
+ String 
+ a scene's ID 
+ 
+ 
+ sceneName 
+ String 
+ a scene's name 
+ 
+ 
+ 
+ Errors 
+ 
+ 
+ 
+ Error code/message 
+ Description 
+ 
+ 
+ 
+ 
+ {"message": "Unauthorized"} 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ Sample 
+ Get all scenes 
+ Request 
+ 
+ Response 
+ 
+ Execute manual scenes 
+ 
+ Description 
+ Sends a request to execute a manual scene. 
+ Path parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ sceneId 
+ String 
+ Yes 
+ scene ID 
+ 
+ 
+ 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ Errors 
+ 
+ 
+ 
+ Error code/message 
+ Description 
+ 
+ 
+ 
+ 
+ {"message": "Unauthorized"} 
+ Http 401 Error. User permission is denied due to invalid token.
+---------------latest_code---------------
+
+Context number 1 (score: 0.847823799): 
+https://api.switch-bot.com
+Context number 2 (score: 0.825142741): 
+GET https://api.switch-bot.com/v1.1/devices
+Context number 3 (score: 0.811771333): 
+GET https://api.switch-bot.com/v1.1/scenes
+Context number 4 (score: 0.809153676): 
+import time
+import hashlib
+import hmac
+import base64
+
+# open token
+token = '' # copy and paste from the SwitchBot app V6.14 or later
+# secret key
+secret = '' # copy and paste from the SwitchBot app V6.14 or later
+nonce = ''
+t = int(round(time.time() * 1000))
+string_to_sign = '{}{}{}'.format(token, t, nonce)
+
+sign = base64.b64encode(hmac.new(secret, msg=string_to_sign, digestmod=hashlib.sha256).digest())
+print ('Authorization: {}'.format(token))
+print ('t: {}'.format(t))
+print ('sign: {}'.format(sign))
+print ('nonce: {}'.format(nonce))
+Context number 5 (score: 0.805368781): 
+const crypto = require('crypto');
+const https = require('https');
+
+const token = "yourToken";
+const secret = "yourSecret";
+const t = Date.now();
+const nonce = "requestID";
+const data = token + t + nonce;
+const signTerm = crypto.createHmac('sha256', secret)
+    .update(Buffer.from(data, 'utf-8'))
+    .digest();
+const sign = signTerm.toString("base64");
+console.log(sign);
+
+const body = JSON.stringify({
+    "command": "turnOn",
+    "parameter": "default",
+    "commandType": "command"
+});
+const deviceId = "MAC";
+const options = {
+    hostname: 'api.switch-bot.com',
+    port: 443,
+    path: `/v1.1/devices/${deviceId}/commands`,
+    method: 'POST',
+    headers: {
+        "Authorization": token,
+        "sign": sign,
+        "nonce": nonce,
+        "t": t,
+        'Content-Type': 'application/json',
+        'Content-Length': body.length,
+    },
+};
+
+const req = https.request(options, res => {
+    console.log(`statusCode: ${res.statusCode}`);
+    res.on('data', d => {
+        process.stdout.write(d);
+    });
+});
+
+req.on('error', error => {
+    console.error(error);
+});
+
+req.write(body);
+req.end();
+Context number 6 (score: 0.801700175): 
+POST https://api.switch-bot.com/v1.1/devices/84F70353A411/commands
+Context number 7 (score: 0.799537957): 
+# secret key
+secret = "" # copy and paste from the SwitchBot app V6.14 or later
+# open token
+token = "" # copy and paste from the SwitchBot app V6.14 or later
+t = 1661927531000
+sign = HMAC-SHA256(token + t, secret).toUpperCase()
+Context number 8 (score: 0.798702419): 
+POST https://api.switch-bot.com/v1.1/devices/02-202007201626-70/commands
+Context number 9 (score: 0.798221171): 
+POST https://api.switch-bot.com/v1.1/devices/02-202007201626-10/commands
+Context number 10 (score: 0.797743142): 
+POST https://api.switch-bot.com/v1.1/webhook/queryWebhook
+Context number 11 (score: 0.797125936): 
+POST https://api.switch-bot.com/v1.1/webhook/setupWebhook
+Context number 12 (score: 0.79657048): 
+GET https://api.switch-bot.com/v1.1/devices/E2F6032048AB/status
+Context number 13 (score: 0.79520005): 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.UUID;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+    	
+      String token = args[0];
+      String secret = args[1];
+      String nonce = UUID.randomUUID().toString();
+      String time= "" + Instant.now().toEpochMilli();
+      String data = token + time + nonce;
+      
+      SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256");
+      Mac mac = Mac.getInstance("HmacSHA256");
+      mac.init(secretKeySpec);
+      String signature = new String(Base64.getEncoder().encode(mac.doFinal(data.getBytes("UTF-8"))));      
+      
+      HttpRequest getDevices = HttpRequest.newBuilder()
+      .uri(new URI("https://api.switch-bot.com/v1.1/devices"))
+      .header("Authorization", token)
+      .header("sign", signature)
+      .header("nonce", nonce)
+      .header("t", time)
+      .GET()
+      .build();
+      
+      HttpResponse<String> response = HttpClient.newBuilder().build().send(getDevices, BodyHandlers.ofString());
+      
+      System.out.println(response.body());
+    }
+}
+Context number 14 (score: 0.794082642): 
+GET https://api.switch-bot.com/v1.1/devices/C271111EC0AB/status
+Context number 15 (score: 0.792825222): 
+import json
+import time
+import hashlib
+import hmac
+import base64
+import uuid
+
+# Declare empty header dictionary
+apiHeader = {}
+# open token
+token = '' # copy and paste from the SwitchBot app V6.14 or later
+# secret key
+secret = '' # copy and paste from the SwitchBot app V6.14 or later
+nonce = uuid.uuid4()
+t = int(round(time.time() * 1000))
+string_to_sign = '{}{}{}'.format(token, t, nonce)
+
+string_to_sign = bytes(string_to_sign, 'utf-8')
+secret = bytes(secret, 'utf-8')
+
+sign = base64.b64encode(hmac.new(secret, msg=string_to_sign, digestmod=hashlib.sha256).digest())
+print ('Authorization: {}'.format(token))
+print ('t: {}'.format(t))
+print ('sign: {}'.format(str(sign, 'utf-8')))
+print ('nonce: {}'.format(nonce))
+
+#Build api header JSON
+apiHeader['Authorization']=token
+apiHeader['Content-Type']='application/json'
+apiHeader['charset']='utf8'
+apiHeader['t']=str(t)
+apiHeader['sign']=str(sign, 'utf-8')
+apiHeader['nonce']=str(nonce)
+Context number 16 (score: 0.792359114): 
+POST https://api.switch-bot.com/v1.1/devices/210/commands
+Context number 17 (score: 0.79184556): 
+POST https://api.switch-bot.com/v1.1/devices/F7538E1ABC23/commands
+Context number 18 (score: 0.791567504): 
+POST https://api.switch-bot.com/v1.1/scenes/T02-202009221414-48924101/execute
+Context number 19 (score: 0.789307654): 
+POST https://api.switch-bot.com/v1.1/devices/F7538E1ABCEB/commands
+---------------outdated_natural_language---------------
+
+Context number 1 (score: 0.837574899): 
+SwitchBot API v1.0 
+ 
+ SwitchBot API 
+ 
+ Introduction 
+ Getting Started 
+ Authentication 
+ 
+ Open Token 
+ 
+ 
+ Glossary 
+ API Usage 
+ 
+ Host Domain 
+ Sending a Request 
+ 
+ Content-Type 
+ Request limit 
+ 
+ 
+ Request Header 
+ Standard HTTP Error Codes 
+ 
+ 
+ Devices 
+ 
+ Get device list 
+ 
+ Description 
+ Responses 
+ Sample 
+ 
+ Get all devices 
+ 
+ 
+ 
+ 
+ Get device status 
+ 
+ Description 
+ Path parameters 
+ Responses 
+ Sample 
+ 
+ SwitchBot Meter example 
+ SwitchBot Curtain example 
+ 
+ 
+ 
+ 
+ Send device control commands 
+ 
+ Description 
+ Command set for physical devices 
+ Command set for virtual infrared remote devices 
+ Path parameters 
+ Request body parameters 
+ Response 
+ Errors 
+ Sample 
+ 
+ Bot example 
+ Infrared remote device example 
+ 
+ 
+ 
+ 
+ 
+ 
+ Scenes 
+ 
+ Get scene list 
+ 
+ Description 
+ Response 
+ Errors 
+ Sample 
+ 
+ Get all scenes 
+ 
+ 
+ 
+ 
+ Execute manual scenes 
+ 
+ Description 
+ Path parameters 
+ Errors 
+ Sample 
+ 
+ Execute a scene 
+ 
+ 
+ 
+ 
+ 
+ 
+ Webhook 
+ 
+ Setup webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Query webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ Response 
+ 
+ queryUrl 
+ queryDetails 
+ 
+ 
+ 
+ 
+ Update webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Delete webhook 
+ 
+ Description 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ Response 
+ 
+ 
+ Receive events from webhook 
+ 
+ Motion Sensor 
+ Contact Sensor 
+ Meter 
+ Meter Plus 
+ Lock 
+ Indoor Cam 
+ Pan/Tilt Cam 
+ Color Bulb 
+ LED Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Introduction 
+ This document describes a collection of SwitchBot API methods, examples, and best practices for, but not limited to, IoT hobbyists, developers, and gurus to make their own smart home programs or applications. 
+ Getting Started 
+ Please follow these steps, 
+ 
+ Download the SwitchBot app on App Store or Google Play Store 
+ Register a SwitchBot account and log in into your account 
+ Generate an Open Token within the app
+a) Go to Profile > Preference
+b) Tap App Version 10 times. Developer Options will show up
+c) Tap Developer Options
+d) Tap Get Token 
+ Roll up your sleeves and get your hands dirty with SwitchBot OpenAPI! 
+ 
+ Authentication 
+ Open Token 
+ The token returned from the SwitchBot Cloud is an encrypted open token that grants the user developer-level permissions.
+Context number 2 (score: 0.774599314): 
+Authentication 
+ Open Token 
+ The token returned from the SwitchBot Cloud is an encrypted open token that grants the user developer-level permissions. The user will be able to add, delete, edit, and look up his or her user data including profile data and data associated with the devices that have been added to the user's account. 
+ Glossary 
+ The following table provides definitions to the terms to be frequently mentioned in the subsequent sections. 
+ 
+ 
+ 
+ Term 
+ Description 
+ 
+ 
+ 
+ 
+ Hub 
+ Generally referred to these devices, SwitchBot Hub Model No. SwitchBot Hub S1/SwitchBot Hub Mini Model No. W0202200/SwitchBot Hub Plus Model No. SwitchBot Hub S1 
+ 
+ 
+ Hub Mini 
+ Short for SwitchBot Hub Mini Model No. W0202200 
+ 
+ 
+ Hub Plus 
+ Short for SwitchBot Hub Plus Model No. SwitchBot Hub S1 
+ 
+ 
+ Bot 
+ Short for SwitchBot Bot Model No. SwitchBot S1 
+ 
+ 
+ Curtain 
+ Short for SwitchBot Curtain Model No. W0701600 
+ 
+ 
+ Plug 
+ Short for SwitchBot Plug Model No. SP11 
+ 
+ 
+ Meter 
+ Short for SwitchBot Thermometer and Hygrometer Model No. SwitchBot MeterTH S1 
+ 
+ 
+ Meter Plus (JP) 
+ Short for SwitchBot Thermometer and Hygrometer Plus (JP) Model No. W2201500 
+ 
+ 
+ Meter Plus (US) 
+ Short for SwitchBot Thermometer and Hygrometer Plus (US) Model No. W2301500 
+ 
+ 
+ Motion Sensor 
+ Short for SwitchBot Motion Sensor Model No. W1101500 
+ 
+ 
+ Contact Sensor 
+ Short for SwitchBot Contact Sensor Model No. W1201500 
+ 
+ 
+ Color Bulb 
+ Short for SwitchBot Color Bulb Model No. W1401400 
+ 
+ 
+ Smart Fan 
+ Short for SwitchBot Smart Fan Model No. W0601100 
+ 
+ 
+ Strip Light 
+ Short for SwitchBot LED Strip Light Model No. W1701100 
+ 
+ 
+ Plug Mini (US) 
+ Short for SwitchBot Plug Mini (US) Model No. W1901400 
+ 
+ 
+ Plug Mini (JP) 
+ Short for SwitchBot Plug Mini (JP) Model No. W2001400 
+ 
+ 
+ Lock 
+ Short for SwitchBot Lock Model No. W1601700 
+ 
+ 
+ Robot Vacuum Cleaner S1 
+ Short for SwitchBot Robot Vacuum Cleaner S1 Model No.
+Context number 3 (score: 0.773946106): 
+W2001400 
+ 
+ 
+ Lock 
+ Short for SwitchBot Lock Model No. W1601700 
+ 
+ 
+ Robot Vacuum Cleaner S1 
+ Short for SwitchBot Robot Vacuum Cleaner S1 Model No. W3011000; currently only available in Japan 
+ 
+ 
+ Robot Vacuum Cleaner S1 Plus 
+ Short for SwitchBot Robot Vacuum Cleaner S1 Plus Model No. W3011010; currently only available in Japan 
+ 
+ 
+ Cloud Service 
+ An SwitchBot app feature that 1. enables SwitchBot products to be discovered and communicated with third-party services voice control services, 2. allows users to create customized smart scenes and Android widgets. For BLE-based devices such as Bot and Curtain, you MUST first add a Hub/Hub Mini/Hub Plus and then enable Cloud Service on the Settings page in order to make use of the web API! 
+ 
+ 
+ 
+ API Usage 
+ Host Domain 
+ 
+ Sending a Request 
+ The following request types are supported, 
+ 
+ GET 
+ PUT 
+ POST 
+ DELETE 
+ 
+ Content-Type 
+ For   requests, use   as the  
+ Request limit 
+ The amount of API calls per day is limited to  10000  times. Going over that limit will return "Unauthorized." 
+ Request Header 
+ The following parameters need to be included into the header, 
+ 
+ 
+ 
+ Parameter 
+ Type 
+ Location 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ Authorization 
+ String 
+ header 
+ Yes 
+ Open Token acquired 
+ 
+ 
+ 
+ Standard HTTP Error Codes 
+ The following table lists the most common HTTP error response, 
+ 
+ 
+ 
+ Code 
+ Name 
+ Description 
+ 
+ 
+ 
+ 
+ 400 
+ Bad Request 
+ The client has issued an invalid request. This is commonly used to specify validation errors in a request payload. 
+ 
+ 
+ 401 
+ Unauthorized 
+ Authorization for the API is required, but the request has not been authenticated. 
+ 
+ 
+ 403 
+ Forbidden 
+ The request has been authenticated but does not have appropriate permissions, or a requested resource is not found. 
+ 
+ 
+ 404 
+ Not Found 
+ Specifies the requested path does not exist. 
+ 
+ 
+ 406 
+ Not Acceptable 
+ The client has requested a MIME type via the Accept header for a value not supported by the server. 
+ 
+ 
+ 415 
+ Unsupported Media Type 
+ The client has defined a contentType header that is not supported by the server. 
+ 
+ 
+ 422 
+ Unprocessable Entity 
+ The client has made a valid request, but the server cannot process it. This is often used for APIs for which certain limits have been exceeded.
+Context number 4 (score: 0.771226883): 
+422 
+ Unprocessable Entity 
+ The client has made a valid request, but the server cannot process it. This is often used for APIs for which certain limits have been exceeded. 
+ 
+ 
+ 429 
+ Too Many Requests 
+ The client has exceeded the number of requests allowed for a given time window. 
+ 
+ 
+ 500 
+ Internal Server Error 
+ An unexpected error on the SmartThings servers has occurred. These errors should be rare. 
+ 
+ 
+ 
+ Devices 
+ The devices API is used to access the properties and states of SwitchBot devices and to send control commands to those devices. 
+ Get device list 
+ 
+ Description 
+ Get a list of devices, which include physical devices and virtual infrared remote devices that have been added to the current user's account. 
+ Physical devices refer to the following SwitchBot products, 
+ 
+ Hub 
+ Hub Plus 
+ Hub Mini 
+ Bot (MUST enable Cloud Service first) 
+ Curtain (MUST enable Cloud Service first) 
+ Plug 
+ Meter (MUST enable Cloud Service first) 
+ Motion Sensor (MUST enable Cloud Service first) 
+ Contact Sensor (MUST enable Cloud Service first) 
+ Color Bulb 
+ Humidifier 
+ Smart Fan 
+ Strip Light 
+ Plug Mini (US) 
+ Plug Mini (JP) 
+ Lock 
+ Meter Plus (JP) (MUST enable Cloud Service first) 
+ Meter Plus (US) (MUST enable Cloud Service first) 
+  Robot Vacuum Cleaner S1 
+  Robot Vacuum Cleaner S1 Plus 
+ 
+ Virtual infrared remote devices refer to virtual devices that are used to simulate infrared signals of a home appliance remote control. A SwitchBot Hub Plus / Hub Mini is required in order to be able to create these virtual devices within the app.
+Context number 5 (score: 0.759602785): 
+A SwitchBot Hub Plus / Hub Mini is required in order to be able to create these virtual devices within the app. The types of appliances supported include, 
+ 
+ Air Conditioner 
+ TV 
+ Light 
+ IPTV/Streamer 
+ Set Top Box 
+ DVD 
+ Fan 
+ Projector 
+ Camera 
+ Air Purifier 
+ Speaker 
+ Water Heater 
+ Vacuum Cleaner 
+ Others 
+ 
+ Responses 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The body object contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceList 
+ Array 
+ a list of physical devices 
+ 
+ 
+ infraredRemoteList 
+ Array 
+ a list of virtual infrared remote devices 
+ 
+ 
+ 
+ The deviceList array contains a list of objects with the following key-value attributes, 
+ 
+ 
+ 
+ Key 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ device ID 
+ 
+ 
+ deviceName 
+ String 
+ device name 
+ 
+ 
+ deviceType 
+ String 
+ device type 
+ 
+ 
+ enableCloudService 
+ Boolean 
+ determines if Cloud Service is enabled or not for the current device 
+ 
+ 
+ hubDeviceId 
+ String 
+ device's parent Hub ID 
+ 
+ 
+ curtainDevicesIds 
+ Array 
+ only available for Curtain devices. a list of Curtain device IDs such that the Curtain devices are being paired or grouped 
+ 
+ 
+ calibrate 
+ Boolean 
+ only available for Curtain/Lock devices. determines if the open position and the close position of a device have been properly calibrated or not 
+ 
+ 
+ group 
+ Boolean 
+ only available for Curtain devices. determines if a Curtain is paired with or grouped with another Curtain or not 
+ 
+ 
+ master 
+ Boolean 
+ only available for Curtain devices. determines if a Curtain is the master device or not when paired with or grouped with another Curtain 
+ 
+ 
+ openDirection 
+ String 
+ only available for Curtain devices.
+Context number 6 (score: 0.755088091): 
+User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ Sample 
+ Execute a scene 
+ Request 
+ 
+ Response 
+ 
+ Webhook 
+ Configure webhook 
+ Description 
+ Configure the url that all the webhook events will be sent to 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to 
+ 
+ 
+ deviceList 
+ String 
+ the list of device ids, currently only supports "ALL" 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ Sample 
+ 
+ Get webhook configuration 
+ Description 
+ Get the current configuration info of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions, currently supports "queryUrl", "queryDetails" 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to. you need to specify the url when using queryDetails 
+ 
+ 
+ 
+ queryUrl 
+ Head 
+ 
+ Body 
+ 
+ queryDetails 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ queryUrl 
+ 
+ queryDetails 
+ 
+ Update webhook configuration 
+ Description 
+ Update the configuration of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ config 
+ Object 
+ the configuration details you want to update. you can change the current url or enable/disable the webhook. refer to the example below 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ 
+ Delete webhook 
+ Description 
+ Delete the configuration of the webhook 
+ Request 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ Description 
+ 
+ 
+ 
+ 
+ action 
+ String 
+ the type of actions 
+ 
+ 
+ url 
+ String 
+ the url where all the events are sent to 
+ 
+ 
+ 
+ Head 
+ 
+ Body 
+ 
+ Response 
+ 
+ Receive events from webhook 
+ When an event gets triggered, SwitchBot server will send a   request to the url you have configured. Refer to the table below for a list of products that support webhook.
+Context number 7 (score: 0.737795055): 
+15 
+ set the TV channel to switch to 
+ 
+ 
+ 
+ command 
+ volumeAdd 
+ default 
+ volume up 
+ 
+ 
+ 
+ command 
+ volumeSub 
+ default 
+ volume down 
+ 
+ 
+ 
+ command 
+ channelAdd 
+ default 
+ next channel 
+ 
+ 
+ 
+ command 
+ channelSub 
+ default 
+ previous channel 
+ 
+ 
+ DVD, Speaker 
+ command 
+ setMute 
+ default 
+ mute/unmute 
+ 
+ 
+ 
+ command 
+ FastForward 
+ default 
+ fast forward 
+ 
+ 
+ 
+ command 
+ Rewind 
+ default 
+ rewind 
+ 
+ 
+ 
+ command 
+ Next 
+ default 
+ next track 
+ 
+ 
+ 
+ command 
+ Previous 
+ default 
+ last track 
+ 
+ 
+ 
+ command 
+ Pause 
+ default 
+ pause 
+ 
+ 
+ 
+ command 
+ Play 
+ default 
+ play/resume 
+ 
+ 
+ 
+ command 
+ Stop 
+ default 
+ stop 
+ 
+ 
+ Speaker 
+ command 
+ volumeAdd 
+ default 
+ volume up 
+ 
+ 
+ 
+ command 
+ volumeSub 
+ default 
+ volume down 
+ 
+ 
+ Fan 
+ command 
+ swing 
+ default 
+ swing 
+ 
+ 
+ 
+ command 
+ timer 
+ default 
+ set timer 
+ 
+ 
+ 
+ command 
+ lowSpeed 
+ default 
+ set fan speed to low 
+ 
+ 
+ 
+ command 
+ middleSpeed 
+ default 
+ set fan speed to medium 
+ 
+ 
+ 
+ command 
+ highSpeed 
+ default 
+ set fan speed to high 
+ 
+ 
+ Light 
+ command 
+ brightnessUp 
+ default 
+ brightness up 
+ 
+ 
+ 
+ command 
+ brightnessDown 
+ default 
+ brightness down 
+ 
+ 
+ 
+ 
+ Note: Most of the devices support   or  , which are case-sensitive. For infrared remote devices, when you have created customized buttons, you must set   to  , otherwise the command will not work.   needs to be set to the name of the customized button. 
+ 
+ Path parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ deviceId 
+ String 
+ Yes 
+ device ID 
+ 
+ 
+ 
+ Request body parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ command 
+ String 
+ Yes 
+ the name of the command 
+ 
+ 
+ parameter 
+ String 
+ No 
+ some commands require parameters, such as  
+ 
+ 
+ commandType 
+ String 
+ No 
+ for customized buttons, this needs to be set to  
+ 
+ 
+ 
+ Response 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ Errors 
+ 
+ 
+ 
+ Error code/message 
+ Description 
+ 
+ 
+ 
+ 
+ {"message": "Unauthorized"} 
+ Http 401 Error. User permission is denied due to invalid token.
+Context number 8 (score: 0.734068871): 
+User permission is denied due to invalid token. 
+ 
+ 
+ 151 
+ device type error 
+ 
+ 
+ 152 
+ device not found 
+ 
+ 
+ 160 
+ command is not supported 
+ 
+ 
+ 161 
+ device offline 
+ 
+ 
+ 171 
+ hub device is offline 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server. Or command format is invalid. 
+ 
+ 
+ 
+ Sample 
+ Bot example 
+ Turn a Bot on 
+ Request 
+ 
+ 
+ Response 
+ 
+ Set the color value of a Color Bulb
+Request 
+ 
+ 
+ Response 
+ 
+ Infrared remote device example 
+ Set an Air Conditioner 
+ Request 
+ 
+ 
+ Response 
+ 
+ Trigger a customized button 
+ Request 
+ 
+ 
+ Response 
+ 
+ Scenes 
+ The scenes API is used to access the smart scenes created by a user and to execute manual scenes. 
+ Get scene list 
+ 
+ Description 
+ Get a list of manual scenes created by the current user. 
+ Response 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ The body object contains a list of objects, which has the following properties, 
+ 
+ 
+ 
+ Key 
+ Type 
+ Description 
+ 
+ 
+ 
+ 
+ sceneId 
+ String 
+ a scene's ID 
+ 
+ 
+ sceneName 
+ String 
+ a scene's name 
+ 
+ 
+ 
+ Errors 
+ 
+ 
+ 
+ Error code/message 
+ Description 
+ 
+ 
+ 
+ 
+ {"message": "Unauthorized"} 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ Sample 
+ Get all scenes 
+ Request 
+ 
+ Response 
+ 
+ Execute manual scenes 
+ 
+ Description 
+ Sends a request to execute a manual scene. 
+ Path parameters 
+ 
+ 
+ 
+ Name 
+ Type 
+ Required 
+ Description 
+ 
+ 
+ 
+ 
+ sceneId 
+ String 
+ Yes 
+ scene ID 
+ 
+ 
+ 
+ The response is basically a JSON object, which contains the following properties, 
+ 
+ 
+ 
+ Key Name 
+ Value Type 
+ 
+ 
+ 
+ 
+ statusCode 
+ Integer 
+ 
+ 
+ message 
+ String 
+ 
+ 
+ body 
+ Object 
+ 
+ 
+ 
+ Errors 
+ 
+ 
+ 
+ Error code/message 
+ Description 
+ 
+ 
+ 
+ 
+ {"message": "Unauthorized"} 
+ Http 401 Error. User permission is denied due to invalid token.
+Context number 9 (score: 0.70954138): 
+range from 1 to 100 
+ 
+ 
+ color 
+ String 
+ Color Bulb/Strip Light 
+ the color value, RGB "255:255:255" 
+ 
+ 
+ colorTemperature 
+ Integer 
+ Color Bulb 
+ the color temperature value, range from 2700 to 6500 
+ 
+ 
+ lackWater 
+ Boolean 
+ Humidifier 
+ determines if the water tank is empty or not 
+ 
+ 
+ voltage 
+ Integer 
+ Plug Mini 
+ Current voltage of the device (Unit: V) 
+ 
+ 
+ weight 
+ Integer 
+ Plug Mini 
+ the power consumption of the device for the day (Unit: W/min) 
+ 
+ 
+ electricityOfDay 
+ Integer 
+ Plug Mini 
+ How long the device has been used for the day (Unit: min) 
+ 
+ 
+ electricCurrent 
+ Integer 
+ Plug Mini 
+ current of the device (Unit: A) at the moment 
+ 
+ 
+ lockState 
+ String 
+ Lock 
+ determines if the lock is locked or not 
+ 
+ 
+ doorState 
+ String 
+ Lock 
+ determines if the door is closed or not 
+ 
+ 
+ workingStatus 
+ String 
+ Robot Vacuum Cleaner S1/ S1 Plus 
+ the working status of the device, e.g. Cleaning, Paused 
+ 
+ 
+ onlineStatus 
+ String 
+ Robot Vacuum Cleaner S1/ S1 Plus 
+ determines if the device is online or offline 
+ 
+ 
+ battery 
+ Integer 
+ Robot Vacuum Cleaner S1/ S1 Plus 
+ the battery level 
+ 
+ 
+ 
+ The reponses may contain the following codes and message, 
+ 
+ 
+ 
+ Status Code 
+ Body Content 
+ Message 
+ Description 
+ 
+ 
+ 
+ 
+ 100 
+ Device list object 
+ success 
+ Returns an object that contains two device lists 
+ 
+ 
+ n/a 
+ n/a 
+ Unauthorized 
+ Http 401 Error. User permission is denied due to invalid token. 
+ 
+ 
+ 190 
+ n/a 
+ System error 
+ Device internal error due to device states not synchronized with server 
+ 
+ 
+ 
+ Sample 
+ SwitchBot Meter example 
+ Request the status of a SwitchBot Thermometer and Hygrometer 
+ Request 
+ 
+ Response 
+ 
+ SwitchBot Curtain example 
+ Request the status of a SwitchBot Curtain 
+ Request 
+ 
+ Response 
+ 
+ Send device control commands 
+ 
+ Description 
+ Send control commands to physical devices and virtual infrared remote devices.
+---------------outdated_code---------------
+
+Context number 1 (score: 0.847683311): 
+https://api.switch-bot.com
+Context number 2 (score: 0.829163611): 
+GET https://api.switch-bot.com/v1.0/devices
+Context number 3 (score: 0.813424): 
+GET https://api.switch-bot.com/v1.0/scenes
+Context number 4 (score: 0.803731441): 
+POST https://api.switch-bot.com/v1.0/devices/84F70353A411/commands
+Context number 5 (score: 0.800577641): 
+POST https://api.switch-bot.com/v1.0/webhook/setupWebhook
+Context number 6 (score: 0.799570322): 
+POST https://api.switch-bot.com/v1.0/webhook/queryWebhook
+Context number 7 (score: 0.798477352): 
+POST https://api.switch-bot.com/v1.0/devices/02-202007201626-70/commands
+Context number 8 (score: 0.797894299): 
+POST https://api.switch-bot.com/v1.0/devices/02-202007201626-10/commands
+Context number 9 (score: 0.79646796): 
+GET https://api.switch-bot.com/v1.0/devices/C271111EC0AB/status
+Context number 10 (score: 0.794451177): 
+POST https://api.switch-bot.com/v1.0/devices/210/commands
+Context number 11 (score: 0.793994367): 
+GET https://api.switch-bot.com/v1.0/devices/E2F6032048AB/status
+Context number 12 (score: 0.792086542): 
+POST https://api.switch-bot.com/v1.0/scenes/T02-202009221414-48924101/execute
+Context number 13 (score: 0.764967): 
+POST https://api.switch-bot.com/v1.0/webhook/deleteWebhook
+Context number 14 (score: 0.7520594): 
+{
+    "Content-type":"application/json",
+    "Authorization":your_token // enter your API token
+}

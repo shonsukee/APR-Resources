@@ -1,0 +1,1382 @@
+---------------User Query---------------
+"""
+Fitbit OAuth1 backend, docs at:
+    http://psa.matiasaguirre.net/docs/backends/fitbit.html
+"""
+from social.backends.oauth import BaseOAuth1
+
+
+class FitbitOAuth(BaseOAuth1):
+    """Fitbit OAuth authentication backend"""
+    name = 'fitbit'
+    AUTHORIZATION_URL = 'https://www.fitbit.com/oauth/authorize'
+    REQUEST_TOKEN_URL = 'https://api.fitbit.com/oauth/request_token'
+    ACCESS_TOKEN_URL = 'https://api.fitbit.com/oauth/access_token'
+    ID_KEY = 'encodedId'
+    EXTRA_DATA = [('encodedId', 'id'),
+                  ('displayName', 'username')]
+    def get_user_details(self, response):
+        """Return user details from Fitbit account"""
+        return {'username': response.get('displayName'),
+                'email': ''}
+    def user_data(self, access_token, *args, **kwargs):
+        """Loads user data from service"""
+        return self.get_json(
+            'https://api.fitbit.com/1/user/-/profile.json',
+            auth=self.oauth_auth(access_token)
+        )['user']
+
+
+---------------Response---------------
+```python
+"""
+Fitbit OAuth1 backend, docs at:
+    http://psa.matiasaguirre.net/docs/backends/fitbit.html
+"""
+from social.backends.oauth import BaseOAuth1
+
+
+class FitbitOAuth(BaseOAuth1):
+    """Fitbit OAuth authentication backend"""
+    name = 'fitbit'
+    AUTHORIZATION_URL = 'https://www.fitbit.com/oauth2/authorize'
+    REQUEST_TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
+    ACCESS_TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
+    ID_KEY = 'user_id'
+    EXTRA_DATA = [('user_id', 'id'),
+                  ('displayName', 'username')]
+    def get_user_details(self, response):
+        """Return user details from Fitbit account"""
+        return {'username': response.get('displayName'),
+                'email': ''}
+    def user_data(self, access_token, *args, **kwargs):
+        """Loads user data from service"""
+        return self.get_json(
+            'https://api.fitbit.com/1/user/-/profile.json',
+            auth=self.oauth_auth(access_token)
+        )['user']
+```
+
+---------------Similarity Score---------------
+0.7727950447826089
+
+---------------Relevant Context---------------
+---------------latest_natural_language---------------
+
+Context number 1 (score: 0.780166328): 
+When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/developer-
+> guide/application-design/#Localization).
+
+  
+
+## Additional Information
+
+### JSON Web Tokens
+
+Fitbit API access tokens use the JSON Web Token (JWT) format. Fitbit reserves
+the right to change the contents and format of these tokens at any time.
+Client applications should not create dependencies upon the token format.
+
+Access tokens and refresh tokens may be up to 1,024 bytes in size.
+
+### Web Browser Compatibility
+
+The Fitbit API and its implementation of OAuth 2.0 are designed to work with
+the current and one previous version of Apple Safari, Google Chrome, Microsoft
+Edge, and Mozilla Firefox. When a new version of a web browser is released,
+Fitbit begins supporting that version and stop supporting the third most
+recent version.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/authorization/introspect/)
+
+[Introspect](/build/reference/web-api/authorization/introspect/)
+
+[Refresh Token](/build/reference/web-api/authorization/refresh-token/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/authorization/refresh-token/)
+Context number 2 (score: 0.779900134): 
+# Client Credentials Grant Flow
+
+The /oauth2/token endpoint can do the following:
+
+  * Exchange the authorization code for the initial access token and refresh token (See [OAuth2 Token](/build/reference/web-api/authorization/oauth2-token)).  
+This process is required when using the Authorization Code Grant Flow [with
+PKCE].
+
+  * Obtain a new access token and refresh token when the existing access token has expired (See [Refresh Token](/build/reference/web-api/authorization/refresh-token/)).
+  * Initiate the Client Credentials authorization flow (See [Client Credentials](/build/reference/web-api/authorization/client-credentials/)).
+
+Fitbit follows the OAuth 2.0 Client Credentials flow as specified in [RFC
+6749](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4). This
+authorization flow is used with specific Fitbit API endpoints related to
+business operations. It is not supported by the public Web APIs to retrieve
+Fitbit user data.
+
+The Client Credentials Grant flow has the following steps:
+
+  1. The application sends a request to https://api.fitbit.com/oauth2/token with its client_id and client_secret; and
+  2. Fitbit authenticates your application and issues an access token.
+
+* * *
+
+|  
+  
+**Body Parameters**  
+**grant_type**  
+_required_ | **Supported:** client_credentials **Type:** string  
+|  
+**expires_in**  
+_optional_ | Pre-select the desired access token lifetime. `3600` for 1 hour  
+`28800` for 8 hours  
+`86400` for 1 day  
+`604800` for 1 week  
+`2592000` for 30 days  
+`31536000` for 1 year **Default:** 28800 **Type:** string  
+  
+**Request Headers** authorization | required | Must be set to Basic followed by a space, then the Base64 encoded string of your application's client id and secret concatenated with a colon. For example, the Base64 encoded string, **Y2xpZW50X2lkOmNsaWVudCBzZWNyZXQ=** , is decoded as **"client_id:client secret"**. **Token type:** `Basic`  
+||  
+accept | optional | The media type of the response content the client is expecting.
+Context number 3 (score: 0.776031256): 
+See [How do I connect with friends on
+Fitbit?](https://help.fitbit.com/articles/en_US/Help_article/1858.htm)
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/friends/get-friends/)
+
+[Get Friends](/build/reference/web-api/friends/get-friends/)
+Context number 4 (score: 0.774989188): 
+## Additional Information
+
+An access token intentionally is short lived. This is an important security
+mechanism of OAuth 2.0. When using the Authorization Code Grant Flow [with
+PKCE]. By default, the access tokens have an eight-hour lifetime.
+
+When an access token expires, an HTTP 401 error will be returned.
+
+    
+    
+    {
+      "errors": [
+        {
+          "errorType": "expired_token",
+          "message": "Access token expired: eyJhbGciOiJIUzI1NiJ9...."
+        }
+      ]
+    }
+    
+
+At this point, your application needs to refresh the access token. The Fitbit
+API follows
+[RFC6749](https<nolink>://datatracker.ietf.org/doc/html/rfc6749#section-6)
+specification for refreshing access tokens. A refresh token does not expire
+until it is used. The refresh token can only be used once, as a new refresh
+token is returned with the new access token.
+
+If the application makes identical refresh token requests within a two-minute
+period, the Fitbit Web API will return the same response. This is to assist
+applications unable to coordinate the refresh token flow between processes.
+
+Alternatively, your application could redirect the user to the authentication
+flow. If the user is signed in and the scopes requested match the previously
+granted scopes, the user will be redirected to your redirect URL with a new
+access token without being prompted.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/authorization/oauth2-token/)
+
+[OAuth2 Token](/build/reference/web-api/authorization/oauth2-token/)
+
+[Revoke Token](/build/reference/web-api/authorization/revoke-token/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/authorization/revoke-token/)
+Context number 5 (score: 0.774948657): 
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+access_token | The updated active access token.  
+expires_in | the time the access token expires in seconds.  
+refresh_token | the updated active refresh token.  
+token_type | **Supported** : `Bearer`  
+user_id | The Fitbit user ID associated with the access token and refresh token.  
+  
+{  
+"access_token": "eyJhbGciOiJIUzI1...",  
+"expires_in": 28800,  
+"refresh_token": "c643a63c072f0f05478e9d18b991db80ef6061e...",  
+"token_type": "Bearer",  
+"user_id": "GGNJL9"  
+}  
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+## Additional Information
+
+An access token intentionally is short lived. This is an important security
+mechanism of OAuth 2.0.
+Context number 6 (score: 0.769956708): 
+# OAuth2 Token
+
+The /oauth2/token endpoint can do the following:
+
+  * Exchange the authorization code for the initial access token and refresh token (See [OAuth2 Token](/build/reference/web-api/authorization/oauth2-token)). This process is required when using the Authorization Code Grant Flow.
+  * Obtain a new access token and refresh token when the existing access token has expired (See [Refresh Token](/build/reference/web-api/authorization/refresh-token/)).
+  * Initiate the Client Credentials authorization flow (See [Client Credentials](/build/reference/web-api/authorization/client-credentials/)).
+
+* * *
+
+|  
+  
+**Body Parameters**  
+**code**  
+_required_ | The authorization code received in the redirect as a URI parameter. The authorization code is only valid for 10 minutes. **Type:** string  
+|  
+**grant_type**  
+_required_ | **Supported:** `authorization_code` **Type:** string  
+**client_id**  
+_required for client apps_ | This is your Fitbit API application ID from your settings on <https://dev.fitbit.com>. Apps set to type "client" should use this to pass their ID instead of the Authorization header. **Type:** string  
+**redirect_uri**  
+_recommended / required_ | Required if specified in the redirect to the authorization page. Must be exact match. **Type:** URI  
+**expires_in**  
+_optional_ | Specifies the desired access token lifetime.  `28800` for 8 hours **Supported:** 28800 **Type:** integer  
+**code_verifier**  
+(For use with PKCE only)  
+_required_ | The code verifier is used to derive the code challenge while obtaining the access code in the authorization request. This string is the base64url-encoding of a cryptographically, random-generated octet sequence. **Type:** string  
+  
+**Request Headers** authorization | (For use with server apps only)  
+required | Must be set to Basic followed by a space, then the Base64 encoded string of your application's client id and secret concatenated with a colon. For example, the Base64 encoded string, **Y2xpZW50X2lkOmNsaWVudCBzZWNyZXQ=** , is decoded as **"client_id:client secret"**. **Token type:** `Basic`  
+||  
+accept | optional | The media type of the response content the client is expecting.
+Context number 7 (score: 0.769608617): 
+_Returned with Implicit Grant Flow._  
+scope | List of scopes enabled by the Fitbit user.  
+_Returned with Implicit Grant Flow._  
+  
+**Authorization Code Grant Flow [with PKCE]**
+
+    
+    
+    https://example.com/callback?code=<authorization_code>#_=_0
+        
+
+**Implicit Grant Flow**
+
+    
+    
+    https://example.com/callback#access_token=<access_token>
+        &user_id=<user_id>
+        &token_type=Bearer
+        &expires_in=604800
+        &scope=social+weight+nutrition+profile...
+        
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).   
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+
+**Response Codes**  
+
+For a complete list of authorization errors, please refer to the
+[Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-
+messages/#authorization-errors).
+
+  
+
+## Additional Information
+
+### Localizing the consent page
+
+The Fitbit consent page supports localization. Since it is just a web form,
+the text is translated based on the user's "Language by Region/Country"
+setting in their Fitbit account. The user's device or browser language
+settings may translate the consent language, as well. We do not support a
+query parameter that forces language conversion.
+
+[Client Credentials Grant Flow](/build/reference/web-api/authorization/client-
+credentials/)
+
+[!
+Context number 8 (score: 0.767786682): 
+# Authorize
+
+Initiates the OAuth 2.0 authorization flow by presenting the consent screen to
+the Fitbit user.
+
+* * *
+
+|  
+  
+**Query Parameters** **client_id**  
+_required_ | This is the Fitbit API application id created within [dev.fitbit.com](https://dev.fitbit.com/apps). **Type:** string  
+|  
+**response_type**  
+_required_ | `code` for Authorization Code Grant Flow [with PKCE]  
+`token` for Implicit Grant Flow. **Type:** string  
+**scope**  
+_required_ | A space-delimited list of the permissions you are requesting. See [Scopes](/build/reference/web-api/developer-guide/application-design/#Scopes). **Type:** string  
+**redirect_uri**  
+_recommended_ | Where Fitbit should send the user after the user grants or denies consent. Required unless only one redirect URI is specified for the application in the settings on [dev.fitbit.com](https://dev.fitbit.com/apps). See [Redirect URIs](/build/reference/web-api/developer-guide/application-design/#Redirect-URL). **Type:** URI  
+**expires_in**  
+_optional_ | For use with the _Implicit Grant Flow_ only. Pre-select the desired access token lifetime. Authorization Code Grant flow [with PKCE] access tokens only support a lifetime of 8 hours (e.g. 28800). `86400` for 1 day  
+`604800` for 1 week  
+`2592000` for 30 days  
+`31536000` for 1 year **Default:** 86400 **Type:** string  
+**prompt**  
+_optional_ | Specify if you need to force the Fitbit authentication or the OAuth 2.0 authorization page to be displayed. When used, the `redirect_uri` parameter must be specified. `none` for default behavior.  
+`consent` to require consent from the user, even if they have previously
+authorized your application.  
+`login` to require the user to sign in, but request consent according to the
+default behavior.  
+`login consent` to require the user to sign in and authorize your application.
+The space in this parameter value needs to be URL encoded. **Type:** string  
+**state**  
+_recommended_ | Provides any state that might be useful to your application when the user is redirected back to your application.
+Context number 9 (score: 0.766016245): 
+# Get Friends
+
+This endpoint allows the application to retrieves a list of the specified
+Fitbit user's friends. This scope does not provide access to the friend's
+Fitbit data. Those users will need to individually consent to share their data
+with your application.
+
+**Scope:** _social_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+  
+**Supported:** `application/json`  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+data : type | **Supported:** `person`  
+data : id | Fitbit user id.  
+data : attributes : avatar | Link to user's avatar picture.  
+data : attributes : child | Boolean value describing friend as a child account.  
+data : attributes : friend | Boolean value describing user as a friend.  
+data : attributes : name | Person's display name.  
+      
+    
+    {
+     "data": [
+       {
+         "type": "person",
+         "id": "<friend_1>",
+         "attributes": {
+           "avatar": "https://static0.fitbit.com/images/profile/defaultProfile_150.png",
+           "child": false,
+           "friend": true,
+           "name": "Nick"
+         }
+       },
+      {
+         "type": "person",
+         "id": "GGNJL9",
+         "attributes": {
+           "avatar": "https://static0.fitbit.com/images/profile/defaultProfile_150.png",
+           "child": false,
+           "friend": true,
+           "name": "Alan"
+         }
+       }
+     ]
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.   
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+Context number 10 (score: 0.764714599): 
+This
+gives the user secure and transparent control over their data. The data is
+then processed and made available through the API after the user syncs their
+device with the Fitbit data service.
+
+Most of the current devices sold support SpO2 data collection. See the [Fitbit
+Product](https://www.fitbit.com/global/us/products) page to determine if your
+specific device supports SpO2.
+
+[Get Temperature (Core) Summary by Interval](/build/reference/web-
+api/temperature/get-temperature-core-summary-by-interval/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/temperature/get-temperature-core-summary-by-interval/)
+Context number 11 (score: 0.761320472): 
+# Get Friends Leaderboard
+
+This endpoint returns the user's friend leaderboard in the format requested
+using units in the unit system which corresponds to the Accept-Language header
+provided. This scope does not provide access to the friend's Fitbit data.
+Those users will need to individually consent to share their data with your
+application.
+
+**Scope:** _social_
+
+* * *
+
+|  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+type | Describes the user based on the frequency they sync their steps.  
+**Supported:** `ranked-user` | `inactive-user`  
+id | Fitbit user id.  
+attributes : step-rank | Ranking among the user's friends.  
+attributes : step-summary | Weekly step count.  
+attributes : avatar | Link to user's avatar picture.  
+attributes : child | Boolean value describing friend as a child account.  
+attributes : friend | **Supported:** `true`  
+attributes : name | Person's display name.  
+relationships : user : data : id | Fitbit user id.
+Context number 12 (score: 0.760628283): 
+**Token type:** `Basic`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/basics/#localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/basics/#localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+access_token | The updated active access token.  
+expires_in | The time the access token expires in seconds.  
+refresh_token | The updated active refresh token.  
+token_type | **Supported** : `Bearer`  
+user_id | The Fitbit user ID associated with the access token and refresh token  
+  
+{  
+"access_token": "eyJhbGciOiJIUzI1...",  
+"expires_in": 28800,  
+"refresh_token": "c643a63c072f0f05478e9d18b991db80ef6061e...",  
+"token_type": "Bearer",  
+"user_id": "GGNJL9"  
+}  
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/developer-guide/application-design/#Localization).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.
+Context number 13 (score: 0.760197282): 
+pagination : sort | The sort parameter of the request.  
+pagination : limit | The limit parameter of the request.  
+  
+**Maximum:** `10`  
+pagination : offset | The offset parameter of the request.  
+      
+    
+    {
+      "alerts": [
+        {
+          "alertTime": "2022-09-28T17:12:30.000",
+          "detectedTime": "2022-09-28T17:45:00.000",
+          "serviceVersion": "2.2",
+          "algoVersion": "1.6",
+          "deviceType": "Sense",
+          "windows": [
+            {
+              "startTime": "2022-09-28T17:12:30.000",
+              "bpmData": [
+                {
+                  "dataTime": "2022-09-28T17:12:30.124",
+                  "value": 73
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "pagination": {
+        "afterDate": "2022-09-28T20:00:00",
+        "next": "[https://api.fitbit.com/1/user/-/irn/alerts/list.json?offset=0&limit=10&sort=asc&afterDate=2022-09-28T21:00:00"](https://api.fitbit.com/1/user/-/irn/alerts/list.json?offset=0&limit=10&sort=asc&afterDate=2022-09-28T21:00:00"),
+        "previous": "",
+        "sort": "asc",
+        "limit": 1,
+        "offset": 0
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+Context number 14 (score: 0.760117769): 
+See [ How does my Fitbit device calcuate my daily
+activity?](https://help.fitbit.com/articles/en_US/Help_article/1141.htm) for
+more information.
+
+### Webhook notifications
+
+The Fitbit Web API can send notifications when a Fitbit user has new data to
+download. This is possible by implementing the Subscription API and
+subscribing to one or more data collections. See [ Using
+Subscriptions](/build/reference/web-api/developer-guide/using-subscriptions/).
+Whenever the activity service recognizes a change to the user’s data, a
+notification is sent to your application’s subscriber.
+
+The activity collection recognizes changes to a user’s recorded activities,
+step count, calories burned, distance traveled, etc. Keep in mind that even
+when a person is not in motion, their body is burning calories. It’s possible
+to receive activity notifications representing calorie burn even when the user
+is sleeping or stationary. Today, you cannot subscribe to a subset of the
+user’s activity data. So, it is the responsibility of your application to
+query the necessary activity endpoint(s) to reconcile the data in your system.
+
+[Get Activity Time Series by Date Range](/build/reference/web-api/activity-
+timeseries/get-activity-timeseries-by-date-range/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity-timeseries/get-activity-timeseries-by-date-range/)
+Context number 15 (score: 0.759645879): 
+attributes : child | Boolean value describing friend as a child account.  
+attributes : friend | **Supported:** `true`  
+attributes : name | Person's display name.  
+relationships : user : data : id | Fitbit user id.  
+relationships : user : data : type | **Supported:** `person`  
+      
+    
+    {
+     "data": [
+       {
+         "type": "ranked-user",
+         "id": "<friend_1>",
+         "attributes": {
+           "step-rank": 1,
+           "step-summary": 6392.0
+         },
+         "relationships": {
+           "user": {
+             "data": {
+               "type": "person",
+               "id": "<friend_1>"
+             }
+           }
+         }
+       },
+       {
+         "type": "ranked-user",
+         "id": "<friend_2>",
+         "attributes": {
+           "step-rank": 2,
+           "step-summary": 5205.0
+         },
+         "relationships": {
+           "user": {
+             "data": {
+               "type": "person",
+               "id": "<friend_2>"
+             }
+           }
+         }
+       },
+       {
+         "type": "inactive-user",
+         "id": "<friend_3>",
+         "relationships": {
+           "user": {
+             "data": {
+               "type": "person",
+               "id": "<friend_3>"
+             }
+           }
+         }
+       }
+     ],
+     "included": [
+       {
+         "type": "person",
+         "id": "<friend_1>",
+         "attributes": {
+           "avatar": "https://static0.fitbit.com/images/profile/defaultProfile_150.png",
+           "child": false,
+           "friend": true,
+           "name": "Mary"
+         }
+       },
+       {
+         "type": "person",
+         "id": "<friend_2>",
+         "attributes": {
+           "avatar": "<https://static0.fitbit.com/images/profile/defaultProfile_150.png">,
+           "child": false,
+           "friend": true,
+           "name": "James"
+         }
+       },
+       {
+         "type": "person",
+         "id": "<friend_3>",
+         "attributes": {
+           "avatar": "https://static0.fitbit.com/images/profile/defaultProfile_150.png",
+           "child": false,
+           "friend": true,
+           "name": "Erin"
+         }
+       }
+     ]
+    }
+    
+    
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.
+Context number 16 (score: 0.759619653): 
+**Response Codes**  
+204 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+## Additional Information
+
+### Webhook notifications
+
+The Fitbit Web API can send notifications when a Fitbit user has new data to
+download. This is possible by implementing the Subscription API and
+subscribing to one or more data collections. See [ Using
+Subscriptions](/build/reference/web-api/developer-guide/using-subscriptions/).
+Whenever the activity service recognizes a change to the user’s data, a
+notification is sent to your application’s subscriber.
+
+The activity collection recognizes changes to a user’s recorded activities,
+step count, calories burned, distance traveled, etc. Keep in mind that even
+when a person is not in motion, their body is burning calories. It’s possible
+to receive activity notifications representing calorie burn even when the user
+is sleeping or stationary. Today, you cannot subscribe to a subset of the
+user’s activity data. So, it is the responsibility of your application to
+query the necessary activity endpoint(s) to reconcile the data in your system.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/create-favorite-activity/)
+
+[Create Favorite Activity](/build/reference/web-api/activity/create-favorite-
+activity/)
+
+[Delete Favorite Activity](/build/reference/web-api/activity/delete-favorite-
+activity/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/delete-favorite-activity/)
+Context number 17 (score: 0.758412182): 
+**Token type:** `Basic`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+access_token | The active access token.  
+expires_in | The time the access token expires in seconds.  
+scope | List of scopes supported by the access token.  
+  
+token_type | **Supported** : `Bearer`  
+  
+{  
+"access_token": "eyJhbGciOiJIUzI1...",  
+"expires_in": 28800,  
+"scope": "",  
+"token_type": "Bearer"  
+}  
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.
+Context number 18 (score: 0.758116663): 
+## Response
+
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+## Additional Information
+
+### Revoked tokens
+
+Users have granular control over read/write access to their data through the
+Fitbit Web API. When a user revokes consent to your application, their access
+token becomes invalid and your access to that user's data through the Web API
+is no longer available. What you do with the data that has already been
+collected should be clearly documented in your Terms of Service and Privacy
+Policy. Any guidelines or requirements defined by Fitbit will be specified in
+our [Platform Terms of Service](https://dev.fitbit.com/legal/platform-terms-
+of-service/).
+
+### Revoking refresh tokens
+
+When a `/oauth2/revoke` request is made with a refresh_token that is not
+present in our database, the service will respond with an HTTP status code of
+404 (NOT_FOUND).
+Context number 19 (score: 0.755868912): 
+The data is
+thenprocessed and made available through the API after the user syncs their
+device with the Fitbit data service.
+
+Most of the current devices sold support breathing rate data collection. See
+the [Fitbit Product](https://www.fitbit.com/global/us/products) page to
+determine if your specific device supports breathing rate.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/breathing-rate/get-br-summary-by-date/)
+
+[Get Breathing Rate Summary by Date](/build/reference/web-api/breathing-
+rate/get-br-summary-by-date/)
+Context number 20 (score: 0.755363047): 
+# Refresh Token
+
+The /oauth2/token endpoint can do the following:
+
+  * Exchange the authorization code for the initial access token and refresh token (See [OAuth2 Token](/build/reference/web-api/authorization/oauth2-token)).  
+This process is required when using the Authorization Code Grant Flow.
+
+  * Obtain a new access token and refresh token when the existing access token has expired (See [Refresh Token](/build/reference/web-api/authorization/refresh-token/)).
+  * Initiate the Client Credentials authorization flow (See [Client Credentials](/build/reference/web-api/authorization/client-credentials/)).
+
+* * *
+
+|  
+  
+**Body Parameters**  
+**grant_type**  
+_required_ | **Supported:** `refresh_token` **Type:** string  
+|  
+**refresh_token**  
+_required_ | The refresh token issued to you by Fitbit. **Type:** string  
+**client_id**  
+_required for client apps_ | This is your Fitbit API application ID from your settings on <https://dev.fitbit.com>. Apps set to type "client" should use this to pass their ID instead of the Authorization header. **Type:** string  
+**expires_in**  
+_optional_ | Specifies the desired access token lifetime.  `28800` for 8 hours **Supported:** 28800 **Type:** integer  
+  
+**Request Headers** authorization | (For use with server apps only)  
+required | Must be set to Basic followed by a space, then the Base64 encoded string of your application's client id and secret concatenated with a colon. For example, the Base64 encoded string, **Y2xpZW50X2lkOmNsaWVudCBzZWNyZXQ=** , is decoded as **"client_id:client secret"**. **Token type:** `Basic`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+access_token | The updated active access token.  
+expires_in | the time the access token expires in seconds.
+---------------latest_code---------------
+
+Context number 1 (score: 0.81368953): 
+## Request
+
+URL |  https://www.fitbit.com/oauth2/authorize  
+---
+Context number 2 (score: 0.796148): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/oauth2/token  
+Authorization: Basic <basic_token>  
+Content-Type: application/x-www-form-urlencoded  
+  
+grant_type=client_credentials  
+
+curl -X POST "https://api.fitbit.com/oauth2/token" \  
+-H "accept: application/json" \  
+-H "authorization: Basic <basic_token>" \  
+-d "grant_type=client_credentials"  
+
+  
+
+* * *
+Context number 3 (score: 0.794335306): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.1/user/-/friends.json  
+GET https://api.fitbit.com/1.1/user/GGNJL9/friends.json
+
+curl -X GET "https://api.fitbit.com/1.1/user/-/friends.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 4 (score: 0.793238878): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1.1/oauth2/introspect  
+Authorization: Bearer <access_token>  
+Content-Type: application/x-www-form-urlencoded  
+  
+token=<The OAuth 2.0 token to retrieve the state>  
+
+curl -X POST "https://api.fitbit.com/1.1/oauth2/introspect" \  
+-H "authorization: Bearer <access_token> \"  
+-H "content-type: application/x-www-form-urlencoded" \  
+-d "token=<The OAuth 2.0 token to retrieve the state>" 
+
+  
+
+* * *
+Context number 5 (score: 0.792087138): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET <https://api.fitbit.com/1/user/-/irn/profile.json>  
+GET <https://api.fitbit.com/1/user/GGNJL9/irn/profile.json>  
+
+curl -X GET "<https://api.fitbit.com/1/user/-/irn/profile.json"> \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 6 (score: 0.789815485): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/profile.json  
+GET https://api.fitbit.com/1/user/GGNJL9/profile.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/profile.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 7 (score: 0.789354444): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/devices.json  
+GET https://api.fitbit.com/1/user/GGNJL9/devices.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/devices.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 8 (score: 0.78912884): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/br/date/2021-11-09/all.json  
+GET https://api.fitbit.com/1/user/GGNJL9/br/date/2021-11-009/all.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/br/date/2021-11-09/all.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 9 (score: 0.787509561): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/activities.json  
+GET https://api.fitbit.com/1/user/GGNJL9/activities.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/activities.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 10 (score: 0.787291): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/hrv/date/2021-10-04/all.json  
+GET https://api.fitbit.com/1/user/GGNJL9/hrv/date/2021-10-04/all.json  
+
+curl -X GET "https://api.fitbit.com/1/user/-/hrv/date/2021-10-04/all.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 11 (score: 0.78705442): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json  
+GET
+https://api.fitbit.com/1.2/user/GGNJL9/sleep/date/2020-01-01/2020-01-05.json
+
+curl -X GET
+"https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 12 (score: 0.786741138): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/hrv/date/2021-10-01/2021-10-04/all.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/hrv/date/2021-10-01/2021-10-04/all.json
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/hrv/date/2021-10-25/2022-10-26/all.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 13 (score: 0.786651): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/br/date/2021-10-04.json  
+GET <https://api.fitbit.com/1/user/GGNJL9/br/date/2021-10-04.json>  
+
+curl -X GET "https://api.fitbit.com/1/user/-/br/date/2021-10-04.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 14 (score: 0.786258936): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/badges.json  
+GET https://api.fitbit.com/1/user/GGNJL9/badges.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/badges.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 15 (score: 0.786193371): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/br/date/2021-10-25/2021-11-09/all.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/br/date/2021-10-01/2021-10-04/all.json
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/br/date/2021-10-25/2021-11-09/all.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 16 (score: 0.785112381): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/br/date/2021-10-25/2021-11-24.json  
+GET https://api.fitbit.com/1/user/GGNJL9/br/date/2021-10-01/2021-10-04.json
+
+curl -X GET
+"https://api.fitbit.com/1/user/-/br/date/2021-10-25/2021-11-24.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+---------------outdated_natural_language---------------
+
+Context number 1 (score: 0.710479379): 
+Resource URL 
+ 
+ 
+ 
+       user-id   The encoded ID of
+    the user. Use "-" (dash) for current logged-in user.     
+ log-id   ID of the sleep log to be deleted.   
+   
+ Response 
+ A successful request will return a  204  status code with an empty response
+body. 
+ Sleep Time Series (Deprecated) 
+ Note:  This API has been deprecated with the introduction of version 1.2 of
+the Sleep APIs described above. Sleep Stages data cannot be retrieved with this
+API. If your application requires data consistency while you transition over to
+the version 1.2 Sleep APIs, you can get this data through the  version 1 Get
+Sleep Logs by Date
+endpoint . 
+ The  Get Sleep Time Series  endpoint returns time series data in the specified
+range for a given resource in the format requested using units in the  unit
+system  that corresponds to the Accept-Language
+header provided. 
+ Note:  Even if you provide earlier dates in the request, the response
+retrieves only data since the user's join date or the first log entry date for
+the requested collection. 
+ Resource URL 
+ There are two acceptable formats for retrieving intraday data: 
+ 
+ 
+ 
+       api-version   The API
+    version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+    user.       resource-path   The resource path; see
+    the  Resource Path Options  below for a list of options.     
+ date   The end date of the period specified in the format
+     yyyy-MM-dd  or  today .       period   The
+    range for which data will be returned. Options are  1d, 7d, 30d, 1w, 1m,
+    3m, 6m, 1y,  or  max.       
+ 
+ 
+ 
+       api-version   The API
+   version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+   user.       resource-path   The resource path; see
+   the  Resource Path Options  below for a list of options.     
+ base-date   The range start date, in the format  yyyy-MM-dd 
+   or  today .
+---------------outdated_code---------------
+
+Context number 1 (score: 0.794555783): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[base-date]/[end-date].json
+Context number 2 (score: 0.786585033): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[date]/[period].json
+Context number 3 (score: 0.777588964): 
+GET https://api.fitbit.com/1/user/-/sleep/date/2014-09-01.json
+Context number 4 (score: 0.772186816): 
+GET https://api.fitbit.com/1/user/[user-id]/sleep/date/[date].json
+Context number 5 (score: 0.768834054): 
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/today/2014-09-01.json
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/2014-09-01/today.json
+Context number 6 (score: 0.768759489): 
+POST https://api.fitbit.com/1/user/-/sleep.json?date=2017-03-27&startTime=19:55&duration=7200000
+Context number 7 (score: 0.765192747): 
+POST https://api.fitbit.com/1/user/[user-id]/sleep.json
+Context number 8 (score: 0.737828374): 
+DELETE https://api.fitbit.com/1/user/[user-id]/sleep/[log-id].jso
+Context number 9 (score: 0.702543437): 
+{
+    "sleep": [
+        {
+            "isMainSleep": true,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T00:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>, // deprecated
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"00:00:00",
+                    "value":"3"
+                },
+                {
+                    "dateTime":"00:01:00",
+                    "value":"2"
+                },
+                {
+                    "dateTime":"00:02:00",
+                    "value":"1"
+                },
+                <...>
+            ]
+        },
+        {
+            "isMainSleep": false,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T14:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>,
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"14:00:00",
+                    "value":"3"
+                },
+                <...>
+            ]
+        }
+    ],
+    "summary":{
+        "totalMinutesAsleep": <value>,
+        "totalSleepRecords": 2,
+        "totalTimeInBed": <value in minutes>
+    }
+}

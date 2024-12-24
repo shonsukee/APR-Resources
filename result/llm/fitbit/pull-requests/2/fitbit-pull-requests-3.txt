@@ -1,0 +1,28 @@
+---------------User Query---------------
+app.get("/authorize", function (req, res) {
+	client.getRequestToken().then(function (results) {
+		var token = results[0],
+			secret = results[1];
+		requestTokenSecrets[token] = secret;
+		res.redirect("http://www.fitbit.com/oauth/authorize?oauth_token=" + token);
+	}, function (error) {
+		res.send(error);
+	});
+});
+---------------Response---------------
+app.get("/authorize", function (req, res) {
+    const querystring = require("querystring");
+    const client_id = "YOUR_CLIENT_ID"; // Fitbit Client ID
+    const redirect_uri = "YOUR_REDIRECT_URI"; // Your app's redirect URI
+    const scope = "activity heartrate profile"; // Example scope, adjust as needed
+    const response_type = "code";
+
+    const authorizeUrl = `https://www.fitbit.com/oauth2/authorize?${querystring.stringify({
+        client_id,
+        redirect_uri,
+        scope,
+        response_type
+    })}`;
+
+    res.redirect(authorizeUrl);
+});

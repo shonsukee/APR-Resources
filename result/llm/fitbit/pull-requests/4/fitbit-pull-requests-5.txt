@@ -1,0 +1,63 @@
+---------------User Query---------------
+function authorize() {
+	var oAuthConfig = UrlFetchApp.addOAuthService("fitbit");
+	oAuthConfig.setAccessTokenUrl("https://api.fitbit.com/oauth/access_token");
+	oAuthConfig.setRequestTokenUrl("https://api.fitbit.com/oauth/request_token");
+	oAuthConfig.setAuthorizationUrl("https://api.fitbit.com/oauth/authorize");
+	oAuthConfig.setConsumerKey(getConsumerKey());
+	oAuthConfig.setConsumerSecret(getConsumerSecret());
+
+	var options = {
+	  "oAuthServiceName" : "fitbit",
+	  "oAuthUseToken" : "always"
+	};
+
+	// get The profile but don't do anything with it -- just to force
+	// authentication
+	var result = UrlFetchApp.fetch(
+		"https://api.fitbit.com/1/user/-/profile.json", options);
+	var o = Utilities.jsonParse(result.getContentText());
+
+	return o.user;
+	// options are dateOfBirth, nickname, state, city, fullName, etc. see
+	// http://wiki.fitbit.com/display/API/API-Get-User-Info
+}
+
+---------------Response---------------
+function authorize() {
+	var tokenUrl = "https://api.fitbit.com/oauth2/token";
+	var authUrl = "https://www.fitbit.com/oauth2/authorize";
+
+	var consumerKey = getConsumerKey();
+	var consumerSecret = getConsumerSecret();
+	var encodedCredentials = Utilities.base64Encode(consumerKey + ":" + consumerSecret);
+
+	var options = {
+		method: "post",
+		headers: {
+			Authorization: "Basic " + encodedCredentials,
+			"Content-Type": "application/x-www-form-urlencoded"
+		},
+		payload: {
+			client_id: consumerKey,
+			grant_type: "client_credentials"
+		}
+	};
+
+	var response = UrlFetchApp.fetch(tokenUrl, options);
+	var tokenData = JSON.parse(response.getContentText());
+
+	var accessToken = tokenData.access_token;
+
+	var profileOptions = {
+		method: "get",
+		headers: {
+			Authorization: "Bearer " + accessToken
+		}
+	};
+
+	var profileResponse = UrlFetchApp.fetch("https://api.fitbit.com/1/user/-/profile.json", profileOptions);
+	var profileData = JSON.parse(profileResponse.getContentText());
+
+	return profileData.user;
+}

@@ -1,0 +1,184 @@
+---------------User Query---------------
+module Switchbot
+	class Client
+	  API_ENDPOINT = 'https://api.switch-bot.com'
+  
+	  def initialize(token)
+		@token = token
+	  end
+  
+	  def devices
+		request(
+		  http_method: :get,
+		  endpoint: 'v1.0/devices'
+		)
+	  end
+
+	  def device(device_id)
+		Device.new(client: self, device_id: device_id)
+	  end
+	  def status(device_id:)
+		request(
+		  http_method: :get,
+		  endpoint: "/v1.0/devices/#{device_id}/status"
+		)
+	  end
+  
+	  def commands(device_id:, command:, parameter: 'default', command_type: 'command')
+		request(
+		  http_method: :post,
+		  endpoint: "/v1.0/devices/#{device_id}/commands",
+		  params: {
+			command: command,
+			parameter: parameter,
+			commandType: command_type
+		  }
+		)
+	  end
+	  def scenes
+		request(
+		  http_method: :get,
+		  endpoint: 'v1.0/scenes'
+		)
+	  end
+
+	  def scene(scene_id)
+		Scene.new(client: self, scene_id: scene_id)
+	  end
+	  def execute(scene_id:)
+		request(
+		  http_method: :post,
+		  endpoint: "/v1.0/scenes/#{scene_id}/execute"
+		)
+	  end
+
+	  private
+  
+	  def headers
+		{
+		  'User-Agent' => "Switchbot v#{Switchbot::VERSION} (https://github.com/ytkg/switchbot)",
+		  'Authorization' => @token
+		}
+	  end
+
+	  def request(http_method:, endpoint:, params: {})
+		response = connection.public_send(http_method, endpoint, params)
+		response.body.deep_transform_keys(&:underscore).deep_symbolize_keys
+	  end
+	end
+end
+
+---------------Response---------------
+require 'faraday'
+require 'json'
+require 'openssl'
+require 'securerandom'
+
+module Switchbot
+  class Client
+    API_ENDPOINT = 'https://api.switch-bot.com/v1.1'
+
+    def initialize(token, secret)
+      @token = token
+      @secret = secret
+    end
+
+    def devices
+      request(
+        http_method: :get,
+        endpoint: 'devices'
+      )
+    end
+
+    def device(device_id)
+      Device.new(client: self, device_id: device_id)
+    end
+
+    def status(device_id:)
+      request(
+        http_method: :get,
+        endpoint: "devices/#{device_id}/status"
+      )
+    end
+
+    def commands(device_id:, command:, parameter: 'default', command_type: 'command')
+      request(
+        http_method: :post,
+        endpoint: "devices/#{device_id}/commands",
+        body: {
+          command: command,
+          parameter: parameter,
+          commandType: command_type
+        }
+      )
+    end
+
+    def scenes
+      request(
+        http_method: :get,
+        endpoint: 'scenes'
+      )
+    end
+
+    def scene(scene_id)
+      Scene.new(client: self, scene_id: scene_id)
+    end
+
+    def execute(scene_id:)
+      request(
+        http_method: :post,
+        endpoint: "scenes/#{scene_id}/execute"
+      )
+    end
+
+    private
+
+    def headers
+      timestamp = Time.now.to_i.to_s
+      nonce = SecureRandom.uuid
+      sign = generate_sign(timestamp, nonce)
+      {
+        'User-Agent' => "Switchbot v#{defined?(Switchbot::VERSION) ? Switchbot::VERSION : '1.0'} (https://github.com/ytkg/switchbot)",
+        'Authorization' => @token,
+        'sign' => sign,
+        'nonce' => nonce,
+        't' => timestamp
+      }
+    end
+
+    def generate_sign(timestamp, nonce)
+      data = @token + timestamp + nonce
+      hash = OpenSSL::HMAC.digest('sha256', @secret, data)
+      Base64.strict_encode64(hash)
+    end
+
+    def request(http_method:, endpoint:, body: nil)
+      response = connection.public_send(http_method) do |req|
+        req.url endpoint
+        req.headers = headers
+        if http_method == :get
+          req.params = body if body
+        else
+          req.body = body.to_json if body
+        end
+      end
+      handle_response(response)
+    end
+
+    def connection
+      Faraday.new(url: API_ENDPOINT) do |faraday|
+        faraday.adapter Faraday.default_adapter
+        faraday.headers['Content-Type'] = 'application/json; charset=utf8'
+      end
+    end
+
+    def handle_response(response)
+      case response.status
+      when 200
+        JSON.parse(response.body, symbolize_names: true)
+      else
+        { error: "HTTP #{response.status}", message: response.body }
+      end
+    end
+  end
+end

@@ -1,0 +1,423 @@
+---------------User Query---------------
+public class Plugin extends Aware_Plugin {
+    private class FibitDataSync extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                if (Plugin.fitbitAPI == null) restoreFitbitAPI(getApplicationContext());
+
+                String devices;
+                try {
+                    devices = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/devices.json");
+                } catch (OAuthException e) {
+                    if (DEBUG) Log.d(TAG, "Failed to connect to the server: api.fitbit.com. Problem with your internet connection.");
+                    e.printStackTrace();
+                    devices = null;
+                }
+                if (devices == null) return null;
+
+                //Get data now that we have authenticated with Fitbit
+                JSONArray devices_fitbit = new JSONArray(devices);
+                if (DEBUG) Log.d(TAG, "Latest info on server (devices): " + devices_fitbit.toString(5));
+
+                for (int i = 0; i < devices_fitbit.length(); i++) {
+
+                    JSONObject fit = devices_fitbit.getJSONObject(i);
+
+                    Cursor device = getContentResolver().query(Provider.Fitbit_Devices.CONTENT_URI, null, Provider.Fitbit_Devices.FITBIT_ID + " LIKE '" + fit.getString("id") + "'", null, Provider.Fitbit_Devices.TIMESTAMP + " DESC LIMIT 1");
+                    if (device != null && device.moveToFirst()) {
+
+                        JodaTimeAndroid.init(getApplicationContext());
+                        DateTime localSync = DateTime.parse(device.getString(device.getColumnIndex(Provider.Fitbit_Devices.LAST_SYNC)));
+                        DateTime serverSync = DateTime.parse(fit.getString("lastSyncTime"));
+
+                        Cursor localData = getContentResolver().query(Provider.Fitbit_Data.CONTENT_URI, null, null, null, null);
+                        if (!localSync.isEqual(serverSync) || (localData == null || localData.getCount() == 0)) {
+
+                            String localSyncDate = device.getString(device.getColumnIndex(Provider.Fitbit_Devices.LAST_SYNC)).split("T")[0];
+                            String serverSyncDate = fit.getString("lastSyncTime").split("T")[0];
+
+                            String steps = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/activities/steps/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_GRANULARITY) + ".json");
+                            if (steps == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No steps for this device.");
+                            } else {
+                                JSONObject steps_data = new JSONObject(steps);
+                                ContentValues stepsData = new ContentValues();
+                                stepsData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                stepsData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                stepsData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                stepsData.put(Provider.Fitbit_Data.DATA_TYPE, "steps");
+                                stepsData.put(Provider.Fitbit_Data.FITBIT_JSON, steps_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, stepsData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New steps: " + steps_data.toString(5));
+                            }
+
+                            String calories = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/activities/calories/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_GRANULARITY) + ".json");
+                            if (calories == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No steps for this device.");
+                            } else {
+                                JSONObject calories_data = new JSONObject(calories);
+                                ContentValues caloriesData = new ContentValues();
+                                caloriesData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                caloriesData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                caloriesData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                caloriesData.put(Provider.Fitbit_Data.DATA_TYPE, "calories");
+                                caloriesData.put(Provider.Fitbit_Data.FITBIT_JSON, calories_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, caloriesData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New calories: " + calories_data.toString(5));
+                            }
+
+                            String heartrate;
+                            if (Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY).equalsIgnoreCase("1min")) {
+                                heartrate = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/activities/heart/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY) + ".json");
+                            } else {
+                                heartrate = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/activities/heart/date/" + serverSyncDate + "/1d/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY) + ".json");
+                            }
+
+                            if (heartrate == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No heartrate for this device.");
+                            } else {
+                                JSONObject heartrate_data = new JSONObject(heartrate);
+                                ContentValues heartRateData = new ContentValues();
+                                heartRateData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                heartRateData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                heartRateData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                heartRateData.put(Provider.Fitbit_Data.DATA_TYPE, "heartrate");
+                                heartRateData.put(Provider.Fitbit_Data.FITBIT_JSON, heartrate_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, heartRateData);
+
+                                if (DEBUG) Log.d(TAG, "New heartrate: " + heartrate_data.toString(5));
+                            }
+
+                            //will have all the sleep related data from yesterday until today
+                            JSONArray sleep = new JSONArray();
+                            localSync = localSync.minusDays(1);
+                            String sleep_efficiency = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/efficiency/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_efficiency == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep efficiency for this device.");
+                            } else {
+                                JSONObject efficiency_data = new JSONObject(sleep_efficiency);
+                                sleep.put(efficiency_data);
+                            }
+                            String sleep_time_in_bed = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/timeInBed/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_time_in_bed == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep time to bed for this device.");
+                            } else {
+                                JSONObject time_to_bed_data = new JSONObject(sleep_time_in_bed);
+                                sleep.put(time_to_bed_data);
+                            }
+                            String sleep_minutes_awake = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/minutesAwake/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_minutes_awake == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep minutes awake for this device.");
+                            } else {
+                                JSONObject minutes_awake_data = new JSONObject(sleep_minutes_awake);
+                                sleep.put(minutes_awake_data);
+                            }
+                            String sleep_minutes_to_sleep = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/minutesToFallAsleep/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_minutes_to_sleep == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep minutes to sleep for this device.");
+                            } else {
+                                JSONObject minutes_to_sleep_data = new JSONObject(sleep_minutes_to_sleep);
+                                sleep.put(minutes_to_sleep_data);
+                            }
+                            String sleep_awake_count = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/awakeningsCount/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_awake_count == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep awake count for this device.");
+                            } else {
+                                JSONObject awake_count_data = new JSONObject(sleep_awake_count);
+                                sleep.put(awake_count_data);
+                            }
+                            String sleep_details = fetchData(getApplicationContext(), "https://api.fitbit.com/1/user/-/sleep/list/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_details == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep detailed list for this device.");
+                            } else {
+                                JSONObject sleep_details_data = new JSONObject(sleep_details);
+                                sleep.put(sleep_details_data);
+                            }
+
+                            if (sleep.length() > 0) {
+                                ContentValues sleepData = new ContentValues();
+                                sleepData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                sleepData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                sleepData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                sleepData.put(Provider.Fitbit_Data.DATA_TYPE, "sleep");
+                                sleepData.put(Provider.Fitbit_Data.FITBIT_JSON, sleep.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, sleepData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New sleep: " + sleep.toString(5));
+                            }
+
+                            //Save the latest sync time. We want to check later how often the fitbits actually synched.
+                            ContentValues latestData = new ContentValues();
+                            latestData.put(Provider.Fitbit_Devices.TIMESTAMP, System.currentTimeMillis());
+                            latestData.put(Provider.Fitbit_Devices.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_ID, fit.getString("id"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_BATTERY, fit.getString("battery"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_VERSION, fit.getString("deviceVersion"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_MAC, fit.optString("mac", ""));
+                            latestData.put(Provider.Fitbit_Devices.LAST_SYNC, fit.getString("lastSyncTime"));
+                            getContentResolver().insert(Provider.Fitbit_Devices.CONTENT_URI, latestData);
+
+                            if (CONTEXT_PRODUCER != null) CONTEXT_PRODUCER.onContext();
+                        }
+                        if (localData != null && !localData.isClosed()) localData.close();
+                    }
+                    if (device != null && !device.isClosed()) device.close();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+}
+
+
+---------------Response---------------
+```java
+public class Plugin extends Aware_Plugin {
+    private class FibitDataSync extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                if (Plugin.fitbitAPI == null) restoreFitbitAPI(getApplicationContext());
+
+                String devices;
+                try {
+                    devices = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/devices.json");
+                } catch (OAuthException e) {
+                    if (DEBUG) Log.d(TAG, "Failed to connect to the server: api.fitbit.com. Problem with your internet connection.");
+                    e.printStackTrace();
+                    devices = null;
+                }
+                if (devices == null) return null;
+
+                //Get data now that we have authenticated with Fitbit
+                JSONArray devices_fitbit = new JSONArray(devices);
+                if (DEBUG) Log.d(TAG, "Latest info on server (devices): " + devices_fitbit.toString(5));
+
+                for (int i = 0; i < devices_fitbit.length(); i++) {
+
+                    JSONObject fit = devices_fitbit.getJSONObject(i);
+
+                    Cursor device = getContentResolver().query(Provider.Fitbit_Devices.CONTENT_URI, null, Provider.Fitbit_Devices.FITBIT_ID + " LIKE '" + fit.getString("id") + "'", null, Provider.Fitbit_Devices.TIMESTAMP + " DESC LIMIT 1");
+                    if (device != null && device.moveToFirst()) {
+
+                        JodaTimeAndroid.init(getApplicationContext());
+                        DateTime localSync = DateTime.parse(device.getString(device.getColumnIndex(Provider.Fitbit_Devices.LAST_SYNC)));
+                        DateTime serverSync = DateTime.parse(fit.getString("lastSyncTime"));
+
+                        Cursor localData = getContentResolver().query(Provider.Fitbit_Data.CONTENT_URI, null, null, null, null);
+                        if (!localSync.isEqual(serverSync) || (localData == null || localData.getCount() == 0)) {
+
+                            String localSyncDate = device.getString(device.getColumnIndex(Provider.Fitbit_Devices.LAST_SYNC)).split("T")[0];
+                            String serverSyncDate = fit.getString("lastSyncTime").split("T")[0];
+
+                            String steps = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/activities/steps/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_GRANULARITY) + ".json");
+                            if (steps == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No steps for this device.");
+                            } else {
+                                JSONObject steps_data = new JSONObject(steps);
+                                ContentValues stepsData = new ContentValues();
+                                stepsData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                stepsData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                stepsData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                stepsData.put(Provider.Fitbit_Data.DATA_TYPE, "steps");
+                                stepsData.put(Provider.Fitbit_Data.FITBIT_JSON, steps_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, stepsData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New steps: " + steps_data.toString(5));
+                            }
+
+                            String calories = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/activities/calories/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_GRANULARITY) + ".json");
+                            if (calories == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No steps for this device.");
+                            } else {
+                                JSONObject calories_data = new JSONObject(calories);
+                                ContentValues caloriesData = new ContentValues();
+                                caloriesData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                caloriesData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                caloriesData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                caloriesData.put(Provider.Fitbit_Data.DATA_TYPE, "calories");
+                                caloriesData.put(Provider.Fitbit_Data.FITBIT_JSON, calories_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, caloriesData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New calories: " + calories_data.toString(5));
+                            }
+
+                            String heartrate;
+                            if (Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY).equalsIgnoreCase("1min")) {
+                                heartrate = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/activities/heart/date/" + localSyncDate + "/" + serverSyncDate + "/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY) + ".json");
+                            } else {
+                                heartrate = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/activities/heart/date/" + serverSyncDate + "/1d/" + Aware.getSetting(getApplicationContext(), Settings.FITBIT_HR_GRANULARITY) + ".json");
+                            }
+
+                            if (heartrate == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No heartrate for this device.");
+                            } else {
+                                JSONObject heartrate_data = new JSONObject(heartrate);
+                                ContentValues heartRateData = new ContentValues();
+                                heartRateData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                heartRateData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                heartRateData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                heartRateData.put(Provider.Fitbit_Data.DATA_TYPE, "heartrate");
+                                heartRateData.put(Provider.Fitbit_Data.FITBIT_JSON, heartrate_data.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, heartRateData);
+
+                                if (DEBUG) Log.d(TAG, "New heartrate: " + heartrate_data.toString(5));
+                            }
+
+                            //will have all the sleep related data from yesterday until today
+                            JSONArray sleep = new JSONArray();
+                            localSync = localSync.minusDays(1);
+                            String sleep_efficiency = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/efficiency/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_efficiency == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep efficiency for this device.");
+                            } else {
+                                JSONObject efficiency_data = new JSONObject(sleep_efficiency);
+                                sleep.put(efficiency_data);
+                            }
+                            String sleep_time_in_bed = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/timeInBed/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_time_in_bed == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep time to bed for this device.");
+                            } else {
+                                JSONObject time_to_bed_data = new JSONObject(sleep_time_in_bed);
+                                sleep.put(time_to_bed_data);
+                            }
+                            String sleep_minutes_awake = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/minutesAwake/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_minutes_awake == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep minutes awake for this device.");
+                            } else {
+                                JSONObject minutes_awake_data = new JSONObject(sleep_minutes_awake);
+                                sleep.put(minutes_awake_data);
+                            }
+                            String sleep_minutes_to_sleep = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/minutesToFallAsleep/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_minutes_to_sleep == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep minutes to sleep for this device.");
+                            } else {
+                                JSONObject minutes_to_sleep_data = new JSONObject(sleep_minutes_to_sleep);
+                                sleep.put(minutes_to_sleep_data);
+                            }
+                            String sleep_awake_count = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/awakeningsCount/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_awake_count == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep awake count for this device.");
+                            } else {
+                                JSONObject awake_count_data = new JSONObject(sleep_awake_count);
+                                sleep.put(awake_count_data);
+                            }
+                            String sleep_details = fetchData(getApplicationContext(), "https://api.fitbit.com/1.2/user/-/sleep/list/date/" + localSync.toString(DateTimeFormat.forPattern("yyyy-MM-dd")) + "/" + serverSyncDate + ".json");
+                            if (sleep_details == null) {
+                                if (DEBUG)
+                                    Log.d(TAG, "No sleep detailed list for this device.");
+                            } else {
+                                JSONObject sleep_details_data = new JSONObject(sleep_details);
+                                sleep.put(sleep_details_data);
+                            }
+
+                            if (sleep.length() > 0) {
+                                ContentValues sleepData = new ContentValues();
+                                sleepData.put(Provider.Fitbit_Data.TIMESTAMP, System.currentTimeMillis());
+                                sleepData.put(Provider.Fitbit_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                                sleepData.put(Provider.Fitbit_Data.FITBIT_ID, fit.getString("id"));
+                                sleepData.put(Provider.Fitbit_Data.DATA_TYPE, "sleep");
+                                sleepData.put(Provider.Fitbit_Data.FITBIT_JSON, sleep.toString());
+                                getContentResolver().insert(Provider.Fitbit_Data.CONTENT_URI, sleepData);
+
+                                if (DEBUG)
+                                    Log.d(TAG, "New sleep: " + sleep.toString(5));
+                            }
+
+                            //Save the latest sync time. We want to check later how often the fitbits actually synched.
+                            ContentValues latestData = new ContentValues();
+                            latestData.put(Provider.Fitbit_Devices.TIMESTAMP, System.currentTimeMillis());
+                            latestData.put(Provider.Fitbit_Devices.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_ID, fit.getString("id"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_BATTERY, fit.getString("battery"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_VERSION, fit.getString("deviceVersion"));
+                            latestData.put(Provider.Fitbit_Devices.FITBIT_MAC, fit.optString("mac", ""));
+                            latestData.put(Provider.Fitbit_Devices.LAST_SYNC, fit.getString("lastSyncTime"));
+                            getContentResolver().insert(Provider.Fitbit_Devices.CONTENT_URI, latestData);
+
+                            if (CONTEXT_PRODUCER != null) CONTEXT_PRODUCER.onContext();
+                        }
+                        if (localData != null && !localData.isClosed()) localData.close();
+                    }
+                    if (device != null && !device.isClosed()) device.close();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+}
+```
+
+
+---------------Similarity Score---------------
+0.7675109475263158
+
+---------------Relevant Context---------------
+
+Context number 1 (score: 0.779952884): 
+Using Subscriptions Everytime a Fitbit user opens the Fitbit mobile application, the Fitbit device automatically syncs to fitbit.com. The average user syncs their Fitbit device several times a day, and the user may manually log additional exercises and nutritional information. Meanwhile, other users may sync their device sporadically, uploading as much as a week's worth of data all at once. Because of the infrequency of updates, Fitbit has developed a subscription service allowing 3rd-party applications to be notified when a Fitbit user has updated their data. This prevents the need for you to develop a polling or scheduling system looking for new data. Introduction to Subscriptions Here are some terms that will be used throughout this section Collection Type A grouping of related resources. For example, all Fitbit members have activities that are summarized by date. Presently, Fitbit supports the following collection types: activities, foods, sleep, body, and userRevokedAccess. Notification Also referred to as a webhook, an HTTP request sent by Fitbit to a subscriber indicating that a Fitbit resource has been added, modified, or deleted. The notification is sent in JSON format Stream A sequence of notifications representing changes to member data. Subscriber A service within the application, and exposed through a publicly-accessible URL, that receives notifications from Fitbit when the user data changes. Subscribers are identified by a Subscriber ID. Subscription An agreement by the application that the specified subscriber wants to receive notifications about changes to the user's collection. Subscriptions are identified by a Subscription ID. To describe how subscriptions work, the developer will create a subscriber endpoint and register the endpoint through their application’s configuration within the Fitbit developer’s portal. This subscriber endpoint URL must be accessible to our servers, be able to handle the incoming HTTP POST request and process the content of the request (JSON). When a user consents to share their data with the developer’s application, the application should create a subscription request for a specific type of data or collection. Once, Fitbit detects updates to the user’s data, a webhook notification is sent in near real-time to the subscriber endpoint URL for processing. These notifications only alert the application to the fact that certain data has been updated. The application must make the appropriate API calls to retrieve the actual data. TIP : Multiple subscriber endpoints can be used to compartmentalize the notifications between a subset of members or data types.
+Context number 2 (score: 0.776373088): 
+The data is then processed and made available through the API after the user syncs their device with the Fitbit data service. Most of the current devices sold support AZM data collection. See the Fitbit Product page to determine if your specific device supports AZM. Get AZM Time Series by Interval
+Context number 3 (score: 0.771591067): 
+Fitbit Platform Terms of Service Last revised on May 25, 2023 Effective as of June 6, 2023 Welcome to the Fitbit Platform. The Fitbit Platform, including the Fitbit APIs and Fitbit Developer Tools, is made available to facilitate innovation in health and wellness. We designed the Fitbit Platform to interact with and enhance Fitbit Products and Services and to enable responsible use of Fitbit User Data. Fitbit devices and services can now be used with a Fitbit Account or a Google Account. When you are granted access to Fitbit User Data, you may collect Fitbit user data or Google user data which are subject to the following Platform Terms: The Fitbit Platform Terms of Service (Fitbit Account) The Fitbit Platform Terms of Service (Google Account) If you do not agree to be bound by the above Platform Terms, then do not access or otherwise use the Fitbit Platform. These Platform Terms govern all access to and use of the Fitbit APIs, the Fitbit Developer Tools, Fitbit Data, and any documentation or materials provided to you in connection therewith. We may update these Platform Terms from time to time as technology evolves and we learn about new risks or opportunities to protect our users. We will always post any such update at the Fitbit Developer Portal , and the updated Platform Terms will be effective and apply to you as updated as of the date of posting. If you do not agree to be bound by an update to these Platform Terms, do not continue to access or use the Fitbit Platform. Definitions “Developer Applications” means any website, application or clock face developed by you that interacts with any aspect of the Fitbit Platform or that are intended for use with Fitbit Products and Services. “API” means an application programming interface, including any and all related code, data, documentation, or other materials. “Fitbit API(s)” means any API provided by Fitbit through which Fitbit Data and other data is transmitted between your Developer Application and the Fitbit Platform. “Fitbit Data” means the data made available to you by Fitbit through the Fitbit API or other means. “Fitbit Developer Portal” means the website, documentation or other materials available at https://dev.fitbit.com . “Fitbit Platform” means the Fitbit Products and Services, Fitbit APIs, the Fitbit Developer Tools, and the Fitbit Data.
+Context number 4 (score: 0.771545529): 
+Retrieving GPS data with HR Zones Applications that require GPS and heart rate zones should not execute the Get Activity TCX endpoint for every exercise recorded. Instead, use the Get Activity Log List endpoint looking for the exercises whose logType is "Tracker" The JSON response will contain the "source" object displaying the name of the device and the features that were used for the exercise (such as “Heartrate” and “GPS”). Record the logId of the activities with those features, then execute the Get Activity TCX endpoint, specifying the logId, to pull the relevant data. NOTE : GPS and heart rate data are only available for exercises recorded on a GPS and heart rate enabled Fitbit device. Multi-Device Overview Fitbit allows the concurrent use of multiple activity tracker devices and scales. Fitbit automatically detects when a person switches from one tracker to another throughout their day or week with no buttons to push on the device or the app. This unified data is then presented to users. TIP : Any device that uses the Fitbit App Gallery may only have one device connected to the account at a time. The devices that apply are Charge 3 and above, Ionic, Inspire Series, Versa Series and Sense. Considerations Data provided through the Fitbit API does not necessarily represent a single tracker. Data can change frequently, as trackers sync at different intervals and the unified data is recalculated at each sync. Distance and number of steps are correlated when GPS data is available. Interpreting the Sleep Stage and Short Data When sleep data is displayed through the Web APIs, the data is represented in 2 ways: The "data" grouping displays the sleep stages and any wake periods > 3 minutes (180 seconds). The "shortData" grouping displays the short wake periods representing physiological awakenings that are <= 3 minutes (180 seconds). The “shortData" is separated to provide better visualization when evaluating the sleep data. Even though the short wakes are not included as a wake stage within the “data” grouping, the short wakes should be considered awake. There will be some overlap between the “shortData” and the sleep stage “data”. The “shortData” will take precedence by overriding any of the sleep stages in “data”. Also, the “shortData” is allowed to span over multiple stages.
+Context number 5 (score: 0.770915687): 
+Fitbit Web API Developer Guide The Fitbit Web API Developer Guide is intended to help a developer get started using the the Web API, along with providing additional content on implementing the endpoints. Anyone may use the Web API to build integrations with the Fitbit data services, so long as their application complies with: the Fitbit Platform Terms of Service , Fitbit User Data and Developer Policy , and the Fitbit user consents to share their data with the developer’s application for access to Fitbit user data, and the Fitbit Platform Terms of Service , the Google APIs Terms of Service , Google API Services User Data Policy , OAuth 2.0 Policies , Fitbit User Data and Developer Policy , and the Fitbit user consents to share their data with the developer's application for access to Google user data. This guide provides the following resources, Getting Started explains how to create a Fitbit developer account and register an application. Authorization steps you through implementing the Authorization Code Grant Flow with PKCE; the recommended authorization flow for requesting access to Fitbit user data. Application Design contains various topics to consider when building your application, such as data types, headers, localization, the rate limit, etc. Using Subscriptions explains the importance of webhooks and the best practices for implementing them in your solution. Best Practices contains suggestions from the support and engineering teams on concepts requested by the developer community. Libraries and Sample Code provides a list of OAuth2 libraries and sample code our developer community found and has successfully used. If you have problems using the Web APIs, check out the Troubleshooting Guide for a solution before contacting the Web API Developer Support team. Active Zone Minutes Time Series
+Context number 6 (score: 0.770110369): 
+OAuth 2.0 Libraries and Sample Code WARNING: Fitbit does not recommend or endorse any of these links. Use at your own risk. OAuth 2.0 Libraries The Fitbit Web API is a common implementation of the OAuth 2.0 specification. You don't need a Fitbit-specific library to use the Fitbit Web API. Instead, we recommend that you use the best OAuth 2.0 or HTTP client library available for your platform. If you don't have a favorite OAuth 2.0 or HTTP library yet, we’ve listed some below that people have told us worked for them. If we don’t have your favorite listed, tell us on the forum . These libraries may contain sample code to get your started. We’ve included other sample code and tutorials below. C# (.NET) Fitbit.NET by Aaron Coleman - https://github.com/aarondcoleman/Fitbit.NET Java ScribeJava - https://github.com/scribejava/scribejava JavaScript for Node.js Fitbit strategy for Passport - https://www.npmjs.com/package/passport-fitbit-oauth2 PHP Fitbit provider for PHP League’s OAuth 2.0 client - https://github.com/djchen/oauth2-fitbit Python python-fitbit by Orcas - https://github.com/orcasgit/python-fitbit R fitbitr by Nagi Teramo - https://github.com/teramonagi/fitbitr Unity UnityFitbit by Travis Evashkevich - https://github.com/TravisEvashkevich/UnityFitbit Others can be found here https://oauth.net/code/#client-libraries Sample Code Many of the OAuth 2.0 libraries provide sample code. We've provided some additional samples below. Also, there are plenty of other code examples that our developer communioty has created which can be found through internet searches. Fitbit's Device SDK https://dev.fitbit.com/build/tutorials/examples/#web-api-oauth Go Fitbit Web API Go client by galeone - https://github.com/galeone/fitbit Google Sheets GoogleFitbit by JKybett - https://github.com/JKybett/GoogleFitBit Python Fitbit API Access Using OAuth 2.0 and Raspberry Pi (January 2016) - http://pdwhomeautomation.blogspot.com/2016/01/fitbit-api-access-using-oauth20-and.html Best Practices
+Context number 7 (score: 0.769055128): 
+i. You are responsible for complying with any request by a User to remove User Data. Fitbit is not responsible for removing Fitbit Data that has been stored on third-party services, including, without limitation, your Developer Application. j. Except as expressly authorized by these Platform Terms or as otherwise permitted in a separate executed agreement between you and Fitbit, you will not attempt or encourage others to: reverse-engineer, disrupt, circumvent, decompile, disassemble, translate, or otherwise interfere with the Fitbit Platform; copy or modify the Fitbit Platform or any component thereof; scrape the Fitbit Platform; resell or otherwise make available, without authorization, any aspect of the Fitbit Platform to third parties (third parties must register with Fitbit and agree to these Platform Terms to access the Fitbit Platform); export Fitbit Data for the purpose of account migration, service duplication, and/or reverse-engineering the Fitbit Data; render Fitbit Data within another product without complying with the display guidelines outlined below; use the Fitbit Platform for purposes of injecting and/or publishing known bad, harmful, and/or discriminatory data into the Fitbit Platform; use or access the Fitbit Platform for the purpose of monitoring the performance or functionality of the Fitbit Platform or for any other benchmarking or competitive purposes; obfuscate or hide the Fitbit Data; create user accounts on the Fitbit Platform for the purpose of load testing; forge headers or otherwise manipulate identifiers in order to disguise the origin of any content transmitted; use Fitbit’s name or logos as part of your name or the name of any Developer Application you offer or in any manner that creates a false sense of endorsement or sponsorship by Fitbit; use the Fitbit Platform in an Developer Application that directly or indirectly promotes criminal activity, illicit drug use, or violates any applicable laws and regulations; use the Fitbit Platform in any inappropriate manner; upload or otherwise transmit any material that contains software viruses or any other computer code, files, or programs designed to interrupt, destroy or limit the functionality of any computer software or hardware or telecommunications equipment; interfere with or disrupt servers or other computer systems; distribute, sell, lease, rent, lend, transfer, or sublicense any part of the Fitbit Platform to any third party; or access or attempt to access any Fitbit server, computer system, service or content except as expressly authorized by Fitbit (e.g., if your Developer Application causes technical stress to the Fitbit Platform, we may suspend or permanently revoke your ability to utilize the Fitbit APIs without notice).
+Context number 8 (score: 0.767528): 
+400 The request had bad syntax or was inherently impossible to be satisfied. 401 The request requires user authentication. Note: For a complete list of response codes, please refer to the Troubleshooting Guide . Additional Information Webhook notifications The Fitbit Web API can send notifications when a Fitbit user has new data to download. This is possible by implementing the Subscription API and subscribing to one or more data collections. See Using Subscriptions . Whenever the activity service recognizes a change to the user’s data, a notification is sent to your application’s subscriber. The activity collection recognizes changes to a user’s recorded activities, step count, calories burned, distance traveled, etc. Keep in mind that even when a person is not in motion, their body is burning calories. It’s possible to receive activity notifications representing calorie burn even when the user is sleeping or stationary. Today, you cannot subscribe to a subset of the user’s activity data. So, it is the responsibility of your application to query the necessary activity endpoint(s) to reconcile the data in your system. Create Favorite Activity Delete Favorite Activity
+Context number 9 (score: 0.766851306): 
+The data is then processed and made available through the API after the user syncs their device with the Fitbit data service. Most of the current devices sold support IRN data collection. See the Fitbit Product page to determine if your specific device supports IRN. Get IRN Profile
+Context number 10 (score: 0.766285598): 
+The mobile application duplicates the tracker distance value by displaying the exercise summary view. This is done to provide a better user experience for the consumer. When the user drills down into the exercise details, like data charts or maps, they should see the more accurate data coming from the GPS or Intraday data. Developers who need to display the most accurate distance values, we suggest using only the intraday distance data points instead of the activity summary. See How does my Fitbit device calcuate my daily activity? for more information. Webhook notifications The Fitbit Web API can send notifications when a Fitbit user has new data to download. This is possible by implementing the Subscription API and subscribing to one or more data collections. See Using Subscriptions . Whenever the activity service recognizes a change to the user’s data, a notification is sent to your application’s subscriber. The activity collection recognizes changes to a user’s recorded activities, step count, calories burned, distance traveled, etc. Keep in mind that even when a person is not in motion, their body is burning calories. It’s possible to receive activity notifications representing calorie burn even when the user is sleeping or stationary. Today, you cannot subscribe to a subset of the user’s activity data. So, it is the responsibility of your application to query the necessary activity endpoint(s) to reconcile the data in your system. Get Activity Log List Get Activity Type
+Context number 11 (score: 0.765942574): 
+This can be configured in application settings on dev.fitbit.com. WARNING : Changing the read-only/read and write settings will immediately invalidate all existing access tokens. Dates All dates are displayed in the format YYYY-MM-DD. The Nutrition API supports the ISO-8601 standard for date values with the following conditions: a 4-digit year [YYYY] year values within the range of 0000-9999 no enforcement of start date restrictions implied by the ISO-8601 standard or other epoch Numerical Ids All integer ids for resources should be considered unsigned 64 bit integers. Time Zones Fitbit does not support time zones for data. Users can specify a time zone in their settings, but this offset is only used to determine the start of their 24-hour period. As such, there is no way to request a specific time zone, because all data is aligned with the user's specified UTC offset. All date and time related fields in the API requests and responses are rendered in the local time of the resource owner's timezone (either the authorized user or the owner of the resource requested). A user's current time zone and UTC offset in milliseconds can be retrieved through the Get Profile endpoint. Some endpoints such as activity and heart rate support the query parameter “timezone=UTC” for returning the data at UTC instead of the user’s timezone settings. Please see the specific endpoints to know if it supports the “timezone” query parameter. Supported Devices All Fitbit devices and Google Pixel watches, current and previous, will collect data that is returned through the Web API. The type of data available will depend on the functionality the devices support. The list of current devices can be found on our web site. See Fitbit Products . Headers Executing the Web API endpoints requires using the appropriate headers and token. See API Endpoint Guide for details. Intraday Data The Web APIs have the ability to expose a finer granularity of data collected throughout the day. This collection of data is called Intraday data. Intraday data is made available for the Activities, Breathing Rate, Heart Rate, HRV and SpO2 data sets by extending the daily detail-level response. A Fitbit developer’s personal Intraday data is automatically available through the “Personal” application type.
+Context number 12 (score: 0.765085578): 
+Rate limit The AZM endpoints are bound by our standard rate limit. See Rate Limits . Device compatibility AZM data is retrieved from the user’s Fitbit account. This gives the user secure and transparent control over their data. The data is then processed and made available through the API after the user syncs their device with the Fitbit data service. Most of the current devices sold support AZM data collection. See the Fitbit Product page to determine if your specific device supports AZM. Get AZM Time Series by Date
+Context number 13 (score: 0.764438152): 
+“Fitbit Platform” means the Fitbit Products and Services, Fitbit APIs, the Fitbit Developer Tools, and the Fitbit Data. "Fitbit Products and Services" means Fitbit’s applications, websites, hardware, software, services, social channels, as well as any content therein. "Fitbit Developer Tools" means any tool, code or documentation provided through the Fitbit Developer Portal, including, without limitation, any firmware images available for download to supported Fitbit Products and Services, the Fitbit APIs and the web-based development environment known as Fitbit Studio. “Open Source Software” means any software that requires as a condition of use, modification or distribution of such software that such software or other software incorporated into, derived from or distributed with such software: (i) be disclosed or distributed in source code form, (ii) be licensed for the purpose of making derivative works, or (iii) be redistributable at no charge. "User" means a person or entity who uses your Developer Application(s) or for which you receive or collect Fitbit Data. "User Data" means Fitbit Data that is associated with a User. "You," "Your," “you,” and “your” means either an individual or an entity, and for an individual representing an entity. Fitbit Platform Terms of Service (Fitbit Accounts) By using the Fitbit Platform to request access to and use User Data from Fitbit Accounts, you consent to be bound by these terms, our Developer Guidelines , and the Fitbit User Data and Developer Policy , which constitute a legal agreement between you and Fitbit LLC, acting on behalf of itself and its subsidiary Fitbit International Limited, an Irish registered company. 1. Usage Policies and Data Access Restrictions a. You acknowledge that Fitbit or other developers may independently create applications, content, products or services that are similar to or competitive with your Developer Application. Nothing in these Platform Terms shall prevent or restrict Fitbit or other developers from creating and fully exploiting any applications, content, products or services and other items they may independently develop, with no obligation to you. b. You may use the Fitbit APIs to retrieve, write, subscribe to changes in User Data, and display information in Developer Applications according to these Platform Terms. c. If your Developer Application causes a User’s account to violate the Fitbit Terms of Service available here, your access to the Fitbit Platform may be suspended or revoked.
+Context number 14 (score: 0.764356077): 
+This gives the user secure and transparent control over their data. The data is then processed and made available through the API after the user syncs their device with the Fitbit data service. Most of the current devices sold support VO2 Max data collection. See the Fitbit Product page to determine if your specific device supports VO2 Max. Get VO2 Max Summary by Date
+Context number 15 (score: 0.764120162): 
+The data is thenprocessed and made available through the API after the user syncs their device with the Fitbit data service. Most of the current devices sold support breathing rate data collection. See the Fitbit Product page to determine if your specific device supports breathing rate. Get Activity Intraday by Interval Get Breathing Rate Intraday by Interval
+Context number 16 (score: 0.76243633): 
+c. If your Developer Application causes a User’s account to violate the Fitbit Terms of Service available here, your access to the Fitbit Platform may be suspended or revoked. d. Fitbit reserves the right to modify or discontinue the Fitbit Platform or any component thereof, including, without limitation, any related products or services at any time without notice to you and without any form of compensation or consideration to you, regardless of the status of any Developer Applications or your research. Fitbit has no obligation to ensure that any modification of the Fitbit Platform will continue to be compatible with your existing Developer Applications. e. Users must be permitted to express contact preferences, via notice and opt-out, at the point of collection, and in each subsequent marketing communication you send. f. You must not display or distribute User Data to any external source without receiving the informed consent of a User. You shall not make public, or facilitate or encourage the making public of User Data. If you use Fitbit Data to publish research findings, you must ensure that any User Data has been de-identified such that it cannot reasonably be used to identify or be linked to any User, taking into account the fact that some Fitbit Data may be publicly available. You shall not deliver, allow, or enable the delivery of unauthorized or unsolicited advertising, promotional materials, junk mail, or spam through your Application. You shall ensure that your Application complies with all relevant privacy and security laws, rules, and regulations. g. If your Developer Application accesses User Data, you must comply with Fitbit’s User authentication system to obtain such access. In particular, your Developer Application must not use any authentication interface other than what is provided by Fitbit as an API, in order to access User Data. h. Use of the Fitbit APIs is subject to restrictions on, among other things, rate limit, use cases, and method calls as outlined on the Fitbit Developer Portal. You may not circumvent or exceed any such restrictions. If Fitbit believes that you have circumvented or exceeded any such restrictions, we may temporarily suspend or permanently revoke your ability to utilize the Fitbit APIs without notice. Fitbit may monitor your usage of the Fitbit APIs in order to improve the Fitbit Platform and to ensure compliance with our policies and applicable laws and regulations. i. You are responsible for complying with any request by a User to remove User Data.
+Context number 17 (score: 0.762217402): 
+Examples The following examples are available for your convenience to help you get started with the Fitbit SDK. Moment Clock SDK example version of the "Moment" clock face by Fitbit. This is intended to be used as an example for building clock faces. Check out Moment Clock Face Exercise App SDK example application which demonstrates the usage of the Exercise API added in Fitbit OS 3.0. Check out Exercise App HR Meter Demonstrates reading the current heart-rate of the user, displaying it on the screen as well as the number of seconds, minutes or hours since the last valid reading. Check out HR Meter . Altimeter Demonstrates using the Barometer to simulate measuring altitude, and display it on the screen. Check out Altimeter . Bay Area Rapid Transit (BART) This example application downloads real-time BART data and shows upcoming trains for a station of your choice. This examples demonstrates: How to build a list-based UI. How to fetch data from the Internet and process it before sending it to the watch. How to use a Settings page to let the user configure the app on the phone. Check out BART . LCD Clock Face This example application simulates a retro LCD digital clock. This examples demonstrates: How to use images for text. How to send color themes from a Settings page. Check out LCD Clock Face . Web API & OAuth A sample application which uses the Settings API OAuth component, and the Fitbit Web API to query sleep data. This example demonstrates: How to use the Settings API to authenticate with an OAuth 2.0 web service. How to use fetch() to query a web API. How to use the Messaging API to send data from the companion to the device. Check out Fitbit OAuth .
+Context number 18 (score: 0.761961281): 
+A Fitbit developer’s personal Intraday data is automatically available through the “Personal” application type. 3rd-party developers who want access to retrieve other Fitbit users’ Intraday data through the “Client” or “Server” application types are granted on a case-by-case basis. Applications must demonstrate the necessity to create a great user experience. Fitbit is very supportive of non-profit research and personal projects. Commercial applications require thorough review and are subject to additional requirements. Only select applications are granted access and Fitbit reserves the right to limit this access. 3rd-party developers who require intraday access should submit a request by filling out the Intraday Request form . Localization Language Some of the API responses include text fields that may be suitable for displaying to the end user. If available, setting the Accept-Locale header will return a translated response. Fitbit currently supports the following locales: Accept-Locale Locale en_AU Australia fr_FR France de_DE Germany ja_JP Japan en_NZ New Zealand es_ES Spain en_GB United Kingdom en_US United States (default) Unit Systems API calls reveal data and log resource values in one of the unit systems based on the value of the Accept-Language header. If an endpoint respects the Accept-Language header, it is explicitly mentioned in the endpoint details. The Accept-Language header value is case sensitive. Improper case or misspelling will result in the metric unit system. Accept-Language Unit System en_US United States en_GB United Kingdom none of the above or not provided Metric Units United States Unit Type Units blood glucose milligrams per deciliter (mg/dL) (mass concentration) body measurements inches calories kilocalories (kcal) distance miles duration milliseconds elevation feet heart rate beats per minute (bpm) height inches liquids fluid ounces (fl oz) temperature fahrenheit weight pounds United Kingdom Unit Type Units blood glucose millimoles per liter (mmol/l) (molar concentration) body measurements centimeters calories kilocalories (kcal) distance kilometers duration milliseconds elevation meters heart rate beats per minute (bpm) height centimeters liquids millimeters temperature celsius weight stone* NOTE: the API uses decimal values for all unit types, so UK weight will be expressed as 10.5 stone instead of 10 stone 7 pounds.
+Context number 19 (score: 0.761941791): 
+Subscription The Subscription endpoints allow an application to subscribe to user specific data. Fitbit will send a webhook notification informing the applicaton that the user has new data to download. This functionality prevents the application from polling our services looking for new data. For additional information on how to use subscriptions and configure your subscriber, see Using Subscriptions in the Developer Guide. The endpoints available in this section are Create Subscription creates a subscription to notify the application when a user has new data available. Delete Subscription deletes a subscription for a specific user. Get Subscription List retrieves a list of subscriptions that are created for a specific user. Blood Oxygen Saturation (SpO2) Temperature

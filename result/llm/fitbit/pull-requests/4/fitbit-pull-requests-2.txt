@@ -1,0 +1,56 @@
+---------------User Query---------------
+function authorize() {
+	var oAuthConfig = UrlFetchApp.addOAuthService("fitbit");
+	oAuthConfig.setAccessTokenUrl("https://api.fitbit.com/oauth/access_token");
+	oAuthConfig.setRequestTokenUrl("https://api.fitbit.com/oauth/request_token");
+	oAuthConfig.setAuthorizationUrl("https://api.fitbit.com/oauth/authorize");
+	oAuthConfig.setConsumerKey(getConsumerKey());
+	oAuthConfig.setConsumerSecret(getConsumerSecret());
+
+	var options = {
+	  "oAuthServiceName" : "fitbit",
+	  "oAuthUseToken" : "always"
+	};
+
+	// get The profile but don't do anything with it -- just to force
+	// authentication
+	var result = UrlFetchApp.fetch(
+		"https://api.fitbit.com/1/user/-/profile.json", options);
+	var o = Utilities.jsonParse(result.getContentText());
+
+	return o.user;
+	// options are dateOfBirth, nickname, state, city, fullName, etc. see
+	// http://wiki.fitbit.com/display/API/API-Get-User-Info
+}
+
+---------------Response---------------
+function authorize() {
+	var clientId = getConsumerKey();
+	var clientSecret = getConsumerSecret();
+	var accessTokenUrl = "https://api.fitbit.com/oauth2/token";
+	var authUrl = "https://www.fitbit.com/oauth2/authorize";
+	var profileUrl = "https://api.fitbit.com/1/user/-/profile.json";
+
+	// Set up OAuth 2.0 configuration
+	var token = UrlFetchApp.fetch(accessTokenUrl, {
+		method: "post",
+		payload: {
+			client_id: clientId,
+			client_secret: clientSecret,
+			grant_type: "client_credentials"
+		}
+	});
+
+	var accessToken = JSON.parse(token.getContentText()).access_token;
+
+	// Fetch user profile
+	var response = UrlFetchApp.fetch(profileUrl, {
+		method: "get",
+		headers: {
+			Authorization: "Bearer " + accessToken
+		}
+	});
+
+	var profile = JSON.parse(response.getContentText());
+	return profile.user;
+}

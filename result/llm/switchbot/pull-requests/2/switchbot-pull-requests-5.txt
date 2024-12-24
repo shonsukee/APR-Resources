@@ -1,0 +1,64 @@
+---------------User Query---------------
+switchbot_host = 'https://api.switch-bot.com/v1.0'
+
+
+class SwitchBotClient:
+    def __init__(self, token: str):
+        self.session = requests.Session()
+        self.session.headers['Authorization'] = token
+
+    def request(self, method: str, path: str, **kwargs) -> Any:
+        url = f'{switchbot_host}/{path}'
+        response = self.session.request(method, url, **kwargs)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f'SwitchBot API server returns status {response.status_code}')
+        response_in_json = humps.decamelize(response.json())
+        if response_in_json['status_code'] != 100:
+            raise RuntimeError(
+                f'An error occurred: {response_in_json["message"]}')
+        return response_in_json
+
+---------------Response---------------
+import time
+import uuid
+import hmac
+import hashlib
+import base64
+import requests
+import humps
+from typing import Any
+
+switchbot_host = 'https://api.switch-bot.com/v1.1'
+
+class SwitchBotClient:
+    def __init__(self, token: str, secret: str):
+        self.token = token
+        self.secret = secret
+        self.session = requests.Session()
+        self.session.headers['Authorization'] = self.token
+
+    def _generate_signature(self):
+        t = int(time.time() * 1000)
+        nonce = str(uuid.uuid4())
+        string_to_sign = f'{self.token}{t}{nonce}'
+        string_to_sign = string_to_sign.encode('utf-8')
+        secret = self.secret.encode('utf-8')
+        sign = base64.b64encode(hmac.new(secret, string_to_sign, digestmod=hashlib.sha256).digest()).decode('utf-8')
+        return sign, nonce, str(t)
+
+    def request(self, method: str, path: str, **kwargs) -> Any:
+        url = f'{switchbot_host}/{path}'
+        sign, nonce, t = self._generate_signature()
+        self.session.headers.update({
+            'sign': sign,
+            'nonce': nonce,
+            't': t
+        })
+        response = self.session.request(method, url, **kwargs)
+        if response.status_code != 200:
+            raise RuntimeError(f'SwitchBot API server returns status {response.status_code}')
+        response_in_json = humps.decamelize(response.json())
+        if response_in_json['status_code'] != 100:
+            raise RuntimeError(f'An error occurred: {response_in_json["message"]}')
+        return response_in_json

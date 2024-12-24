@@ -1,0 +1,21 @@
+---------------User Query---------------
+request_token = client.request_token
+current_user.update(:token => request_token.token, :secret => request_token.secret)
+redirect "http://www.fitbit.com/oauth/authorize?oauth_token=#{current_user.token.to_s}"
+
+---------------Response---------------
+require 'oauth2'
+
+client = OAuth2::Client.new(
+  'YOUR_CLIENT_ID',
+  'YOUR_CLIENT_SECRET',
+  site: 'https://api.fitbit.com',
+  authorize_url: '/oauth2/authorize',
+  token_url: '/oauth2/token'
+)
+
+redirect_uri = 'YOUR_REDIRECT_URI'
+authorize_url = client.auth_code.authorize_url(redirect_uri: redirect_uri, scope: 'activity profile')
+
+# Redirect user to Fitbit's authorization URL
+redirect authorize_url

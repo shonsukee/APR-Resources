@@ -1,0 +1,66 @@
+---------------User Query---------------
+public class FitbitOAuthController {
+    @RequestMapping(value = "/token")
+    public String getToken(HttpServletRequest request) throws IOException, ServletException,
+            OAuthMessageSignerException, OAuthNotAuthorizedException,
+            OAuthExpectationFailedException, OAuthCommunicationException {
+
+        String oauthCallback = ControllerSupport.getLocationBase(request, env) + "fitbit/upgradeToken";
+        if (request.getParameter("guestId") != null)
+            oauthCallback += "?guestId=" + request.getParameter("guestId");
+
+        String consumerKey = env.get("fitbitConsumerKey");
+        String consumerSecret = env.get("fitbitConsumerSecret");
+
+        OAuthConsumer consumer = new DefaultOAuthConsumer(consumerKey,
+                consumerSecret);
+
+        OAuthProvider provider = new DefaultOAuthProvider(
+                "https://api.fitbit.com/oauth/request_token",
+                "https://api.fitbit.com/oauth/access_token",
+                "https://api.fitbit.com/oauth/authorize");
+
+        request.getSession().setAttribute(FITBIT_OAUTH_CONSUMER, consumer);
+        request.getSession().setAttribute(FITBIT_OAUTH_PROVIDER, provider);
+
+        if (request.getParameter("apiKeyId")!=null)
+            request.getSession().setAttribute(FITBIT_RENEWTOKEN_APIKEYID,
+                                              request.getParameter("apiKeyId"));
+
+        String approvalPageUrl = provider.retrieveRequestToken(consumer,
+                oauthCallback);
+
+        return "redirect:" + approvalPageUrl;
+    }
+}
+---------------Response---------------
+
+public class FitbitOAuthController {
+    @RequestMapping(value = "/token")
+    public String getToken(HttpServletRequest request) throws IOException, ServletException {
+
+        String oauthCallback = ControllerSupport.getLocationBase(request, env) + "fitbit/upgradeToken";
+        if (request.getParameter("guestId") != null) {
+            oauthCallback += "?guestId=" + request.getParameter("guestId");
+        }
+
+        String clientId = env.get("fitbitClientId");
+        String clientSecret = env.get("fitbitClientSecret");
+
+        // Redirect to Fitbit's OAuth 2.0 authorization page
+        String authorizationUrl = "https://www.fitbit.com/oauth2/authorize" +
+            "?response_type=code" +
+            "&client_id=" + clientId +
+            "&redirect_uri=" + URLEncoder.encode(oauthCallback, StandardCharsets.UTF_8.toString()) +
+            "&scope=activity%20nutrition%20sleep%20profile";
+
+        request.getSession().setAttribute("fitbitClientId", clientId);
+        request.getSession().setAttribute("fitbitClientSecret", clientSecret);
+
+        if (request.getParameter("apiKeyId") != null) {
+            request.getSession().setAttribute("fitbitRenewTokenApiKeyId", request.getParameter("apiKeyId"));
+        }
+
+        return "redirect:" + authorizationUrl;
+    }
+}

@@ -1,13 +1,11 @@
 ## Instruction
 You are a software engineer specializing in REST APIs.
 Please follow the guidelines below to make the necessary modifications.
-
 ### Modification Procedure
 1. Analyze the deprecated specifications based on ### Technical Specifications for outdated natural language and ### Technical Specifications for outdated code.
 2. Based on the analysis in step 1., identify code snippets that follow deprecated specifications within the source code in ## Input Code.
 3. Analyze the latest specifications based on ### Technical Specifications for latest natural language and ### Technical Specifications for latest code.
 4. Modify the code snippets identified in step 2. to follow the latest specifications analyzed in step 3., while paying attention to the points listed in ### Attention below.
-
 ### Attention
 There may be multiple code snippets following deprecated specifications within ## Input Code.
 Only refer to the information in ### Technical Specifications for Latest natural language and ### Technical Specifications for Latest code when making modifications.
@@ -19,22 +17,16 @@ If no deprecated specification is found in the source code of the ## Input Code,
 Make sure to modify all code that follows deprecated specifications.
 After modifications, ensure that all code following deprecated specifications has been replaced with code that conforms to the latest specifications.
 If multiple deprecated specifications are present within ## Input Code, confirm that all are unified under the latest specifications.
-
 ## Technical Specifications for outdated natural language
 ${非推奨仕様に関する自然言語のコンテキスト}
-
 ## Technical Specifications for outdated code
 ${非推奨仕様に関するソースコードのコンテキスト}
-
 ## Input Code
 ${入力コード}
-
 ## Technical Specifications for latest natural language
 ${最新仕様に関する自然言語のコンテキスト}
-
 ## Technical Specifications for latest code
 ${最新仕様に関するソースコードのコンテキスト}
-
 ## Output Indicator
 Ensure that, except for the parts modified to follow the latest specifications, the structure and format of the code remain identical to the original code.
 Here, "identical" means that there should be no differences (diff) whatsoever, including in indentation, spaces, line breaks, and code structure, which should all be exactly the same as the original.

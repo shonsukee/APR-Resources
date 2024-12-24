@@ -1,0 +1,169 @@
+---------------User Query---------------
+class SwitchBotApiClientImpl @Inject() (
+  okHttpClient: OkHttpClient,
+  switchBotConfiguration: SwitchBotConfiguration,
+  cacheClient: CacheClient[SwitchBotDevicesDataModel],
+  clock: Clock
+)(implicit
+  executionContext: ExecutionContext
+) extends SwitchBotApiClient {
+  import SwitchBotApiClientImpl.*
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  private def requestWithAuthorization(path: String): Request =
+    new Request.Builder()
+      .url(switchBotConfiguration.switchBotEndpoint.resolve(path).toURL)
+      .addHeader(
+        "Authorization",
+        switchBotConfiguration.oauthToken
+      )
+      .build()
+
+  private val getAllDevicesRequest: Request =
+    requestWithAuthorization("/v1.0/devices")
+
+  private def getMeterInfoRequest(deviceId: String): Request =
+    requestWithAuthorization(s"/v1.0/devices/$deviceId/status")
+
+  def getMeterInfo: Future[Seq[SwitchBotMeterInfo]] =
+    for {
+      allDevices <- getAllDevices
+      meterIds = allDevices.collect { case (SwitchBotDeviceType.MeterPlus, deviceId) =>
+        deviceId
+      }
+      meterJsonStrings <- Future.sequence(
+        meterIds.toSeq.map(id =>
+          Future(
+            blocking(
+              okHttpClient
+                .newCall(getMeterInfoRequest(id))
+                .execute()
+                .body()
+                .string()
+            )
+          )
+        )
+      )
+      result <- Future.sequence(
+        meterJsonStrings.map(meterJsonString =>
+          Json
+            .fromJson[SwitchBotMeterInfo](
+              Json.parse(meterJsonString)
+            )
+            .fold(
+              error =>
+                Future.failed(
+                  new IllegalArgumentException(
+                    s"""JSON parse error!
+                       |  error: ${error.mkString(",")}
+                       |  response: $meterJsonString
+                       |""".stripMargin
+                  )
+                ),
+              Future.successful
+            )
+        )
+      )
+    } yield result
+}
+---------------Response---------------
+class SwitchBotApiClientImpl @Inject() (
+  okHttpClient: OkHttpClient,
+  switchBotConfiguration: SwitchBotConfiguration,
+  cacheClient: CacheClient[SwitchBotDevicesDataModel],
+  clock: Clock
+)(implicit
+  executionContext: ExecutionContext
+) extends SwitchBotApiClient {
+  import SwitchBotApiClientImpl.*
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  private def requestWithAuthorization(path: String): Request =
+    new Request.Builder()
+      .url(switchBotConfiguration.switchBotEndpoint.resolve(path).toURL)
+      .addHeader(
+        "Authorization",
+        s"Bearer ${switchBotConfiguration.oauthToken}" // Updated to use Bearer token format as per latest spec
+      )
+      .build()
+
+  private val getAllDevicesRequest: Request =
+    requestWithAuthorization("/v1.1/devices") // Updated endpoint version to v1.1 as per latest spec
+
+  private def getMeterInfoRequest(deviceId: String): Request =
+    requestWithAuthorization(s"/v1.1/devices/$deviceId/status") // Updated endpoint version to v1.1 as per latest spec
+
+  def getAllDevices: Future[Seq[(SwitchBotDeviceType, String)]] =
+    Future(
+      blocking(
+        okHttpClient
+          .newCall(getAllDevicesRequest)
+          .execute()
+          .body()
+          .string()
+      )
+    ).flatMap { responseString =>
+      Json
+        .fromJson[SwitchBotDevicesResponse](Json.parse(responseString))
+        .fold(
+          error =>
+            Future.failed(
+              new IllegalArgumentException(
+                s"""JSON parse error!
+                   |  error: ${error.mkString(",")}
+                   |  response: $responseString
+                   |""".stripMargin
+              )
+            ),
+          response =>
+            Future.successful(
+              response.body.deviceList.map(device =>
+                (device.deviceType, device.deviceId)
+              )
+            )
+        )
+    }
+
+  def getMeterInfo: Future[Seq[SwitchBotMeterInfo]] =
+    for {
+      allDevices <- getAllDevices
+      meterIds = allDevices.collect { case (SwitchBotDeviceType.MeterPlus, deviceId) =>
+        deviceId
+      }
+      meterJsonStrings <- Future.sequence(
+        meterIds.toSeq.map(id =>
+          Future(
+            blocking(
+              okHttpClient
+                .newCall(getMeterInfoRequest(id))
+                .execute()
+                .body()
+                .string()
+            )
+          )
+        )
+      )
+      result <- Future.sequence(
+        meterJsonStrings.map(meterJsonString =>
+          Json
+            .fromJson[SwitchBotMeterInfo](
+              Json.parse(meterJsonString)
+            )
+            .fold(
+              error =>
+                Future.failed(
+                  new IllegalArgumentException(
+                    s"""JSON parse error!
+                       |  error: ${error.mkString(",")}
+                       |  response: $meterJsonString
+                       |""".stripMargin
+                  )
+                ),
+              Future.successful
+            )
+        )
+      )
+    } yield result
+}

@@ -1,0 +1,136 @@
+---------------User Query---------------
+var OAuth = require("oauth").OAuth;
+
+function FitbitApiClient(consumerKey, consumerSecret) {
+	this.oauth = new OAuth(
+		"https://api.fitbit.com/oauth/request_token",
+		"https://api.fitbit.com/oauth/access_token",
+		consumerKey,
+		consumerSecret,
+		"1.0",
+		null,
+		"HMAC-SHA1"
+	);
+}
+
+FitbitApiClient.prototype = {
+	getRequestToken: function () {
+		var getRequestToken = Promise.promisify(this.oauth.getOAuthRequestToken, this.oauth);
+		return getRequestToken();
+	},
+
+	getAccessToken: function (requestToken, requestTokenSecret, verifier) {
+		var getAccessToken = Promise.promisify(this.oauth.getOAuthAccessToken, this.oauth);
+		return getAccessToken(requestToken, requestTokenSecret, verifier);
+	},
+
+	get: function (path, accessToken, accessTokenSecret, userId) {
+		var getResource = Promise.promisify(this.oauth.get, this.oauth);
+		return getResource(getUrl(path, userId), accessToken, accessTokenSecret);
+	},
+
+	post: function (path, accessToken, accessTokenSecret, data, userId) {
+		var postResource = Promise.promisify(this.oauth.post, this.oauth);
+		return postResource(getUrl(path, userId), accessToken, accessTokenSecret, data);
+	},
+
+	put: function (path, accessToken, accessTokenSecret, data, userId) {
+		var putResource = Promise.promisify(this.oauth.put, this.oauth);
+		return putResource(getUrl(path, userId), accessToken, accessTokenSecret, data);
+	},
+
+	delete: function (path, accessToken, accessTokenSecret, userId) {
+		var deleteResource = Promise.promisify(this.oauth.delete, this.oauth);
+		return deleteResource(getUrl(path, userId), accessToken, accessTokenSecret);
+	}
+};
+
+function getUrl(path, userId) {
+	return url = "https://api.fitbit.com/1/user/" + (userId || "-") + path;
+}
+
+
+module.exports = FitbitApiClient;
+---------------Response---------------
+const axios = require('axios');
+const querystring = require('querystring');
+
+class FitbitApiClient {
+    constructor(clientId, clientSecret) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        this.tokenUrl = "https://api.fitbit.com/oauth2/token";
+    }
+
+    async getAccessToken(code, redirectUri) {
+        const authHeader = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+        const data = {
+            client_id: this.clientId,
+            grant_type: 'authorization_code',
+            redirect_uri: redirectUri,
+            code: code,
+        };
+        const headers = {
+            Authorization: `Basic ${authHeader}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+
+        const response = await axios.post(this.tokenUrl, querystring.stringify(data), { headers });
+        return response.data;
+    }
+
+    async refreshAccessToken(refreshToken) {
+        const authHeader = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+        const data = {
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+        };
+        const headers = {
+            Authorization: `Basic ${authHeader}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+
+        const response = await axios.post(this.tokenUrl, querystring.stringify(data), { headers });
+        return response.data;
+    }
+
+    async get(path, accessToken) {
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await axios.get(`https://api.fitbit.com/1${path}`, { headers });
+        return response.data;
+    }
+
+    async post(path, accessToken, data) {
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        };
+
+        const response = await axios.post(`https://api.fitbit.com/1${path}`, data, { headers });
+        return response.data;
+    }
+
+    async put(path, accessToken, data) {
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        };
+
+        const response = await axios.put(`https://api.fitbit.com/1${path}`, data, { headers });
+        return response.data;
+    }
+
+    async delete(path, accessToken) {
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await axios.delete(`https://api.fitbit.com/1${path}`, { headers });
+        return response.data;
+    }
+}
+
+module.exports = FitbitApiClient;

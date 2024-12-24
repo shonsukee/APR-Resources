@@ -1,0 +1,79 @@
+---------------User Query---------------
+module Fitgem
+  class Client
+    API_VERSION = '1'
+    EMPTY_BODY = ''
+
+    def authorize(token, secret, opts={})
+      request_token = OAuth::RequestToken.new(consumer, token, secret)
+      @access_token = request_token.get_access_token(opts)
+      @token = @access_token.token
+      @secret = @access_token.secret
+      @access_token
+    end
+
+    # Get an authentication request token
+    #
+    # @param [Hash] opts Additional request token request data
+    # @return [OAuth::RequestToken]
+    def authentication_request_token(opts={})
+      consumer.options[:authorize_path] = '/oauth/authenticate'
+      request_token(opts)
+    end
+    private
+
+      def consumer
+        @consumer ||= OAuth::Consumer.new(@consumer_key, @consumer_secret, {
+          :site => 'https://api.fitbit.com',
+          :authorize_url => 'https://www.fitbit.com/oauth/authorize',
+          :proxy => @proxy
+        })
+      end
+  end
+end
+---------------Response---------------
+
+module Fitgem
+  class Client
+    API_VERSION = '1'
+    EMPTY_BODY = ''
+
+    def authorize(client_id, client_secret, redirect_uri, code, opts={})
+      response = RestClient.post('https://api.fitbit.com/oauth2/token', {
+        client_id: client_id,
+        client_secret: client_secret,
+        redirect_uri: redirect_uri,
+        code: code,
+        grant_type: 'authorization_code'
+      }, headers: { 'Content-Type': 'application/x-www-form-urlencoded' })
+      @access_token = JSON.parse(response.body)['access_token']
+    end
+
+    # Get an authentication request URL
+    #
+    # @param [Hash] opts Additional request data
+    # @return [String]
+    def authentication_request_url(client_id, redirect_uri, scope, state)
+      "https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=#{client_id}&redirect_uri=#{CGI.escape(redirect_uri)}&scope=#{scope}&state=#{state}"
+    end
+
+    private
+
+      def api_request(endpoint, method, params = {}, headers = {})
+        url = "https://api.fitbit.com/1/#{endpoint}"
+        headers['Authorization'] = "Bearer #{@access_token}"
+        case method.downcase.to_sym
+        when :get
+          RestClient.get(url, headers)
+        when :post
+          RestClient.post(url, params.to_json, headers.merge('Content-Type' => 'application/json'))
+        when :put
+          RestClient.put(url, params.to_json, headers.merge('Content-Type' => 'application/json'))
+        when :delete
+          RestClient.delete(url, headers)
+        else
+          raise "Unsupported HTTP method: #{method}"
+        end
+      end
+  end
+end

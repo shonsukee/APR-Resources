@@ -1,0 +1,71 @@
+---------------User Query---------------
+module Fitgem
+  class Client
+    API_VERSION = '1'
+    EMPTY_BODY = ''
+
+    def authorize(token, secret, opts={})
+      request_token = OAuth::RequestToken.new(consumer, token, secret)
+      @access_token = request_token.get_access_token(opts)
+      @token = @access_token.token
+      @secret = @access_token.secret
+      @access_token
+    end
+
+    # Get an authentication request token
+    #
+    # @param [Hash] opts Additional request token request data
+    # @return [OAuth::RequestToken]
+    def authentication_request_token(opts={})
+      consumer.options[:authorize_path] = '/oauth/authenticate'
+      request_token(opts)
+    end
+    private
+
+      def consumer
+        @consumer ||= OAuth::Consumer.new(@consumer_key, @consumer_secret, {
+          :site => 'https://api.fitbit.com',
+          :authorize_url => 'https://www.fitbit.com/oauth/authorize',
+          :proxy => @proxy
+        })
+      end
+  end
+end
+---------------Response---------------
+
+module Fitgem
+  class Client
+    API_VERSION = '1'
+    EMPTY_BODY = ''
+
+    def authorize(token, secret, opts={})
+      # Updated to OAuth 2.0 flow as per latest Fitbit API specifications
+      request_token = OAuth2::AccessToken.new(consumer, token, secret, opts)
+      @access_token = request_token.token
+      @token = @access_token.token
+      @secret = @access_token.refresh_token
+      @access_token
+    end
+
+    # Get an authentication request token
+    #
+    # @param [Hash] opts Additional request token request data
+    # @return [OAuth2::AccessToken]
+    def authentication_request_token(opts={})
+      # Adjusted for OAuth 2.0 specification
+      consumer.options[:authorize_url] = '/oauth2/authorize'
+      consumer.auth_code.get_token(opts[:code], redirect_uri: opts[:redirect_uri])
+    end
+
+    private
+
+    def consumer
+      @consumer ||= OAuth2::Client.new(@consumer_key, @consumer_secret, {
+        :site => 'https://api.fitbit.com',
+        :authorize_url => 'https://www.fitbit.com/oauth2/authorize',
+        :token_url => 'https://api.fitbit.com/oauth2/token',
+        :proxy => @proxy
+      })
+    end
+  end
+end

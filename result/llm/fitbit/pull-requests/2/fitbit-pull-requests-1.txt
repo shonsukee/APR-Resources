@@ -1,0 +1,22 @@
+---------------User Query---------------
+app.get("/authorize", function (req, res) {
+	client.getRequestToken().then(function (results) {
+		var token = results[0],
+			secret = results[1];
+		requestTokenSecrets[token] = secret;
+		res.redirect("http://www.fitbit.com/oauth/authorize?oauth_token=" + token);
+	}, function (error) {
+		res.send(error);
+	});
+});
+---------------Response---------------
+app.get("/authorize", function (req, res) {
+    client.getRequestToken().then(function (results) {
+        const token = results.oauth_token;
+        const secret = results.oauth_token_secret;
+        requestTokenSecrets[token] = secret;
+        res.redirect("https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=activity%20nutrition%20profile%20settings%20sleep%20social%20weight");
+    }).catch(function (error) {
+        res.send(error);
+    });
+});

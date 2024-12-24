@@ -1,0 +1,70 @@
+---------------User Query---------------
+public class FitbitOAuthController {
+    @RequestMapping(value = "/token")
+    public String getToken(HttpServletRequest request) throws IOException, ServletException,
+            OAuthMessageSignerException, OAuthNotAuthorizedException,
+            OAuthExpectationFailedException, OAuthCommunicationException {
+
+        String oauthCallback = ControllerSupport.getLocationBase(request, env) + "fitbit/upgradeToken";
+        if (request.getParameter("guestId") != null)
+            oauthCallback += "?guestId=" + request.getParameter("guestId");
+
+        String consumerKey = env.get("fitbitConsumerKey");
+        String consumerSecret = env.get("fitbitConsumerSecret");
+
+        OAuthConsumer consumer = new DefaultOAuthConsumer(consumerKey,
+                consumerSecret);
+
+        OAuthProvider provider = new DefaultOAuthProvider(
+                "https://api.fitbit.com/oauth/request_token",
+                "https://api.fitbit.com/oauth/access_token",
+                "https://api.fitbit.com/oauth/authorize");
+
+        request.getSession().setAttribute(FITBIT_OAUTH_CONSUMER, consumer);
+        request.getSession().setAttribute(FITBIT_OAUTH_PROVIDER, provider);
+
+        if (request.getParameter("apiKeyId")!=null)
+            request.getSession().setAttribute(FITBIT_RENEWTOKEN_APIKEYID,
+                                              request.getParameter("apiKeyId"));
+
+        String approvalPageUrl = provider.retrieveRequestToken(consumer,
+                oauthCallback);
+
+        return "redirect:" + approvalPageUrl;
+    }
+}
+---------------Response---------------
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class FitbitOAuthController {
+
+    @GetMapping(value = "/token")
+    public String getToken(HttpServletRequest request) throws IOException, ServletException {
+        String oauthCallback = ControllerSupport.getLocationBase(request, env) + "fitbit/upgradeToken";
+        if (request.getParameter("guestId") != null)
+            oauthCallback += "?guestId=" + request.getParameter("guestId");
+
+        String clientId = env.get("fitbitClientId");
+        String clientSecret = env.get("fitbitClientSecret");
+
+        String authorizationEndpoint = "https://www.fitbit.com/oauth2/authorize";
+        String tokenEndpoint = "https://api.fitbit.com/oauth2/token";
+
+        // Prepare the authorization URL
+        String approvalPageUrl = String.format(
+            "%s?response_type=code&client_id=%s&redirect_uri=%s&scope=activity&expires_in=604800",
+            authorizationEndpoint, clientId, oauthCallback
+        );
+
+        // Save necessary data in session for token exchange
+        request.getSession().setAttribute("FITBIT_CLIENT_ID", clientId);
+        request.getSession().setAttribute("FITBIT_CLIENT_SECRET", clientSecret);
+        request.getSession().setAttribute("FITBIT_TOKEN_ENDPOINT", tokenEndpoint);
+        request.getSession().setAttribute("FITBIT_OAUTH_CALLBACK", oauthCallback);
+
+        return "redirect:" + approvalPageUrl;
+    }
+}

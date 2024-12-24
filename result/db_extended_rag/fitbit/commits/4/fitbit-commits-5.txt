@@ -1,0 +1,1745 @@
+---------------User Query---------------
+#Used by Subtype: USER
+sub fitbit_getSleepGoals($) {
+  my ($hash) = @_;
+  my $name = $hash->{NAME};
+  my $userID = $hash->{USERID};
+
+  Log3 $name, 4, "$name: fitbit_getSleepGoals() ".$hash->{USERID};
+  return undef if( !defined($hash->{IODev}) );
+
+  my $token = fitbit_decrypt( $hash->{IODev}->{helper}{token} );
+  Log3 $name, 5, "$name: fitbit_getSleepGoals(): Use token from I/O Dev $hash->{IODev}->{NAME}";
+
+  my $now = substr(TimeNow(),0,10);
+  HttpUtils_NonblockingGet({
+    url => "https://api.fitbit.com/1/user/-/sleep/goal.json",
+    timeout => 30,
+    noshutdown => 1,
+    header => {"Authorization" => 'Bearer '. $token, "Accept-Locale" => 'de_DE'},
+    hash => $hash,
+    type => 'sleepGoals',
+    callback => \&fitbit_Dispatch,
+  });
+
+  $hash->{LAST_POLL} = TimeNow();
+  readingsSingleUpdate( $hash, ".poll", gettimeofday(), 0 );
+  return undef;
+}
+
+
+---------------Response---------------
+```perl
+#Used by Subtype: USER
+sub fitbit_getSleepGoals($) {
+  my ($hash) = @_;
+  my $name = $hash->{NAME};
+  my $userID = $hash->{USERID};
+
+  Log3 $name, 4, "$name: fitbit_getSleepGoals() ".$hash->{USERID};
+  return undef if( !defined($hash->{IODev}) );
+
+  my $token = fitbit_decrypt( $hash->{IODev}->{helper}{token} );
+  Log3 $name, 5, "$name: fitbit_getSleepGoals(): Use token from I/O Dev $hash->{IODev}->{NAME}";
+
+  my $now = substr(TimeNow(),0,10);
+  HttpUtils_NonblockingGet({
+    url => "https://api.fitbit.com/1.2/user/-/sleep/goal.json",
+    timeout => 30,
+    noshutdown => 1,
+    header => {"Authorization" => 'Bearer '. $token, "Accept-Locale" => 'de_DE'},
+    hash => $hash,
+    type => 'sleepGoals',
+    callback => \&fitbit_Dispatch,
+  });
+
+  $hash->{LAST_POLL} = TimeNow();
+  readingsSingleUpdate( $hash, ".poll", gettimeofday(), 0 );
+  return undef;
+}
+```
+
+---------------Similarity Score---------------
+0.800283431090909
+
+---------------Relevant Context---------------
+---------------latest_natural_language---------------
+
+Context number 1 (score: 0.823424459): 
+# Get Sleep Goal
+
+Returns a user's current sleep goal.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+consistency : flowId |  An integer value representing the sleep goal consistency flow. 
+
+  * **0** = A sleep goal is set, but there are not enough sleep logs recorded.
+  * **1** = The user either missed their sleep goal or no goal is set, but there are enough sleep logs recorded.
+  * **2** = A sleep goal is not set, and there are not enough sleep logs recorded.
+  * **3** = The user achieved their sleep goal.
+
+  
+goal : minDuration | Length of the sleep goal period in minutes.  
+goal : updatedOn | The timestamp that the goal was created/updated.  
+      
+    
+    {
+      "consistency": {
+        "flowId": 2
+      },
+      "goal": {
+        "minDuration": 480,
+        "updatedOn": "2020-01-01T13:00:00.126Z"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests.
+Context number 2 (score: 0.807313859): 
+# Create Sleep Goal
+
+Create or update a user's sleep goal.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Query Parameters**  
+minDuration | required | Length of sleep goal in minutes. | string ($int)  
+|||  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.   
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+content-length | required | According to [RFC 7230, section 3.3.2](https://tools.ietf.org/html/rfc7230#section-3.3.2), this HTTP request requires the Content-Length header field containing the anticipated size of the payload body.
+Context number 3 (score: 0.801217198): 
+# Get Food Goals
+
+Retrieves the user's current daily calorie consumption goal and/or food plan.
+
+**Scope:** _nutrition_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goals : calories | The daily calorie consumption goal.  
+      
+    
+    {
+      "goals": {
+        "calories": 2910
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.
+Context number 4 (score: 0.800117195): 
+# Get Body Goals
+
+Retrieves a user's body fat and weight goals.
+
+**Scope:** _weight_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+goal-type | required | **Supported** : `weight` | `fat`  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goal : goalType | The goal type.  
+**Supported:** `LOSE` | `GAIN` | `MAINTAIN`  
+goal : startDate | The goal start date.  
+goal : startWeight | User's weight when goal was established.  
+goal : weight | The weight goal to achieve.  
+goal : weightThreshold | The recommended amount of weight to lose each week to achieve and maintain goal.  
+goal : fat | The body fat goal to achieve.  
+      
+    
+    **Weight Goal**
+    {
+      "goal": {
+        "goalType": "LOSE",
+        "startDate": "2018-06-13",
+        "startWeight": 105.28,
+        "weight": 99.79,
+        "weightThreshold": 0.05
+      }
+    }
+    
+    **Body Fat Goal**
+    {
+      "goal": {
+        "fat": 25
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+Context number 5 (score: 0.798031867): 
+Sleep "stage" logs use the device heart rate and movement to calculate sleep
+stage data. When manually entering a sleep log, this information is typically
+not available.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/create-sleep-goals/)
+
+[Create Sleep Goal](/build/reference/web-api/sleep/create-sleep-goals/)
+
+[Delete Sleep Log](/build/reference/web-api/sleep/delete-sleep-log/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/delete-sleep-log/)
+Context number 6 (score: 0.790445745): 
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goal : minDuration | Length of the sleep goal period in minutes.  
+goal : updatedOn | The timestamp that the goal was created/updated.  
+      
+    
+    {
+      "goal": {
+        "minDuration": 600,
+        "updatedOn": "2020-01-01T00:26:40.794Z"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+201 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+[Create Sleep Log](/build/reference/web-api/sleep/create-sleep-log/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/create-sleep-log/)
+Context number 7 (score: 0.789095581): 
+sleep : startTime | Time the sleep log begins.  
+sleep : timeInBed | Total number of minutes the user was in bed.  
+sleep : type | The type of sleep log.  
+Supported : `classic` | `stages`  
+      
+    
+    {
+      "sleep": {
+        "dateOfSleep": "2020-02-09",
+        "duration": 720000,
+        "efficiency": 100,
+        "endTime": "2020-02-09T22:12:00.000",
+        "infoCode": 0,
+        "isMainSleep": false,
+        "levels": {
+          "data": [
+            {
+              "dateTime": "2020-02-09T22:00:00.000",
+              "level": "asleep",
+              "seconds": 720
+            }
+          ],
+          "summary": {
+            "asleep": {
+              "count": 0,
+              "minutes": 12
+            },
+            "awake": {
+              "count": 0,
+              "minutes": 0
+            },
+            "restless": {
+              "count": 0,
+              "minutes": 0
+            }
+          }
+        },
+        "logId": 25793948582,
+        "minutesAfterWakeup": 0,
+        "minutesAsleep": 12,
+        "minutesAwake": 0,
+        "minutesToFallAsleep": 0,
+        "startTime": "2020-02-09T22:00:00.000",
+        "timeInBed": 12,
+        "type": "classic"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code.
+Context number 8 (score: 0.788653314): 
+# Create Body Fat Goal
+
+Create or update a user's body fat goal.
+
+**Scope:** _weight_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+  
+**Query Parameters**  
+fat | required | Target body fat percentage in the format X.XX. | decimal  
+|||  
+  
+**Request Headers**
+
+authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+content-length | required | According to [RFC 7230, section 3.3.2](https://tools.ietf.org/html/rfc7230#section-3.3.2), this HTTP request requires the Content-Length header field containing the anticipated size of the payload body.
+Context number 9 (score: 0.788103759): 
+# Get Activity Goals
+
+Retrieves a user's current daily or weekly activity goals.
+
+It uses [units](/build/reference/web-api/developer-guide/application-
+design/#Unit-Systems) that correspond to the Accept-Language header provided.
+
+**Scope:** _activity_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+period | required | **Supported:** `daily`| `weekly`  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).   
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).   
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goals : activeMinutes | Daily active minutes goal. A value is not returned for weekly goals.  
+goals : activeZoneMinutes | Daily or weekly active zone minutes goal.  
+goals : caloriesOut | Daily calories burned goal. A value is not returned for weekly goals.  
+goals : distance | Daily or weekly distance goal.  
+goals : floors | Daily or weekly floors climbed goal.  
+goals : steps | Daily or weekly steps taken goal.  
+  
+The following is an example of a response for daily activity goals.
+
+    
+    
+    {
+        "goals": {
+            "activeMinutes": 55,
+            "activeZoneMinutes": 21,
+            "caloriesOut": 3500,
+            "distance": 5,
+            "floors": 10,
+            "steps": 10000
+        }
+    }
+            
+
+The following is an example of a response for weekly activity goals.
+
+    
+    
+    {
+        "goals": {
+            "activeZoneMinutes": 150,
+            "distance": 56.33,
+            "floors": 70,
+            "steps": 70000
+        }
+    }
+            
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.
+Context number 10 (score: 0.787667274): 
+Therefore, the only supported value is 0. To paginate, request the next and
+previous links in the pagination response object. Using the "offset" query
+parameter in any other capacity could cause your application to break.
+
+### Webhook notifications
+
+The Fitbit Web API can send notifications when a Fitbit user has new data to
+download. This is possible by implementing the Subscription API and
+subscribing to one or more data collections. See [ Using
+Subscriptions](/build/reference/web-api/developer-guide/using-subscriptions/).
+Whenever the activity service recognizes a change to the user’s data, a
+notification is sent to your application’s subscriber.
+
+The activity collection recognizes changes to a user’s recorded activities,
+step count, calories burned, distance traveled, etc. Keep in mind that even
+when a person is not in motion, their body is burning calories. It’s possible
+to receive activity notifications representing calorie burn even when the user
+is sleeping or stationary. Today, you cannot subscribe to a subset of the
+user’s activity data. So, it is the responsibility of your application to
+query the necessary activity endpoint(s) to reconcile the data in your system.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/get-activity-goals/)
+
+[Get Activity Goals](/build/reference/web-api/activity/get-activity-goals/)
+
+[Get Activity TCX](/build/reference/web-api/activity/get-activity-tcx/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/get-activity-tcx/)
+Context number 11 (score: 0.787546575): 
+# Get Water Goal
+
+Retrieves a user's daily water consumption goal.
+
+**Scope:** _nutrition_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.   
+||  
+  
+**Request Headers** authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | The media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+accept-locale | optional | The locale to use for response values. See [Localization](/build/reference/web-api/developer-guide/application-design/#Localization).  
+  
+
+
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goal : goal | Amount of water to consume daily.  
+goal : startDate | Water goal's start date.  
+      
+    
+    {
+      "goal": {
+        "goal": 24,
+        "startDate": "2019-03-21"
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.
+Context number 12 (score: 0.786123753): 
+summary : totalSleepRecords | The number of sleep records within the sleep log.  
+summary : timeInBed | Total number of minutes the user was in bed across all records in the sleep log.  
+      
+    
+    {
+      "pagination": {
+        "afterDate": "2020-05-01",
+        "limit": 1,
+        "next": "https://api.fitbit.com/1.2/user/-/sleep/list.json?offset=1&limit=1&sort=asc&afterDate=2020-05-01",
+        "offset": 0,
+        "previous": "",
+        "sort": "asc"
+      },
+      "sleep": [
+        {
+          "dateOfSleep": "2020-05-01",
+          "duration": 20760000,
+          "efficiency": 50,
+          "endTime": "2020-05-01T06:20:00.000",
+          "infoCode": 0,
+          "isMainSleep": true,
+          "levels": {
+            "data": [
+              {
+                "dateTime": "2020-05-01T00:33:30.000",
+                "level": "wake",
+                "seconds": 810
+              },
+              {
+                "dateTime": "2020-05-01T00:47:00.000",
+                "level": "light",
+                "seconds": 30
+              },
+              {
+                "dateTime": "2020-05-01T00:47:30.000",
+                "level": "deep",
+                "seconds": 270
+              },
+    .
+    .
+    .
+              {
+                "dateTime": "2020-05-01T06:04:00.000",
+                "level": "deep",
+                "seconds": 960
+              }
+            ],
+            "shortData": [
+              {
+                "dateTime": "2020-05-01T01:05:00.000",
+                "level": "wake",
+                "seconds": 60
+              },
+              {
+                "dateTime": "2020-05-01T01:41:00.000",
+                "level": "wake",
+                "seconds": 60
+              },
+    .
+    .
+    .
+Context number 13 (score: 0.785319626): 
+goals : calories | Daily calories goal.  
+summary | Total nutritional values consumed in a day.  
+      
+    
+    {
+      "foods": [
+        {
+          "isFavorite": true,
+          "logDate": "2019-03-21",
+          "logId": 17406206369,
+          "loggedFood": {
+            "accessLevel": "PUBLIC",
+            "amount": 1,
+            "brand": "Subway",
+            "calories": 280,
+            "foodId": 14022778,
+            "locale": "en_US",
+            "mealTypeId": 3,
+            "name": "6 inch Turkey Breast",
+            "unit": {
+              "id": 296,
+              "name": "sandwich",
+              "plural": "sandwiches"
+            },
+            "units": [
+              296,
+              226,
+              180,
+              147,
+              389
+            ]
+          },
+          "nutritionalValues": {
+            "calories": 280,
+            "carbs": 46,
+            "fat": 3.5,
+            "fiber": 5,
+            "protein": 18,
+            "sodium": 760
+          }
+        }
+      ],
+      "goals": {
+        "calories": 2910
+      },
+      "summary": {
+        "calories": 280,
+        "carbs": 46,
+        "fat": 3.5,
+        "fiber": 5,
+        "protein": 18,
+        "sodium": 760,
+        "water": 0
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code.
+Context number 14 (score: 0.785118163): 
+## Get Sleep Log List
+
+This endpoint returns a list of a user's sleep log entries before or after a
+given date, and specifying offset, limit and sort order. The data returned for
+different dates can include sleep periods that began on the previous date. For
+example, a sleep log entry for 2018-10-21 may have ended that day but started
+the previous night on 2018-10-20.
+
+It uses [units](/build/reference/web-api/developer-guide/application-
+design/#Unit-Systems) that correspond to the Accept-Language header provided.
+
+**Scope:** _sleep_
+
+* * *
+
+|  
+  
+**URI Arguments**  
+user-id | required | The encoded ID of the user. Use "-" (dash) for current logged-in user.  
+||  
+  
+**Query Parameters**  
+beforeDate | optional/required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either **beforeDate** or **afterDate** must be specified. Set sort to desc when using beforeDate. | string ($datetime)  
+|||  
+afterDate | optional/required | The date in the format yyyy-MM-ddTHH:mm:ss. Only yyyy-MM-dd is required. Either **beforeDate** or **afterDate** must be specified. Set sort to asc when using afterDate. | string ($int)  
+sort | required | **Supported** : `asc` | `desc`  
+The sort oder of entries by date. Use asc to show the oldest sleep log first. Use desc to show the most frequent sleep log first. | string  
+limit | required | The number of sleep logs to be returned.  
+  
+**Maximum:** `100` | string ($int)  
+offset | required | **Supported** : `0` (zero)  
+  
+**IMPORTANT** : To paginate, request the next and previous links in the pagination response object. Do not manually specify the offset parameter, as it will be removed in the future and your app will break. | string ($int)  
+  
+**Request Headers**  
+authorization | required | Specify the token type and Fitbit user’s access token.  
+**Token type:** `Bearer`  
+||  
+accept | optional | Defines the media type of the response content the client is expecting.  
+**Supported:** `application/json`  
+accept-language | optional | The measurement unit system to use for response values.
+Context number 15 (score: 0.784999549): 
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+## Additional Information
+
+### Sleep periods
+
+The value returned does not apply to a single date, necessarily, but to a
+measurement taken during a period of sleep. For most users, this will span two
+dates to account for the HRV values on the date at which the summary was
+provided, as well as during the previous night’s sleep.
+
+### Collecting HRV data
+
+HRV data is collected when the following conditions have been met:
+
+  * the Health Metrics tile in the user's mobile application dashboard is enabled.
+  * the data is only collected when the user is sleeping.
+  * the user must have a minimum of 3 hours of sleep.
+  * during the main sleep period, a sleep stages log is created.
+
+If any of these items do not occur, then HRV data will not be collected.  
+For HRV, a HTTP status 200 means the endpoint executed successfully regardless
+if data exists. A premium subscription is not needed for the Health Metrics
+tile or HRV data collection.
+
+There are many factors that can affect a user’s HRV value. Recording the data
+while a person is asleep allows the Fitbit device to correctly and accurately
+collect HRV data. Data is only processed when the user is still. If a user
+moves too much or their sleep session is too short, this can prevent HRV data
+from being processed correctly. In addition, if recorded data is incapable of
+computing specific sleep stages for a period of sleep, this will compromise
+the user’s ability to retrieve an HRV value.
+
+The device automatically stops collecting HRV data after it determines the
+user is awake, typically through physical movements. Once the user syncs their
+device, HRV data will begin processing for that sleep period. It usually takes
+up to 15 minutes for the HRV data to be processed and made available to
+download.
+
+You can read more about **data accuracy** on
+<https://www.nature.com/articles/s41746-021-00493-6>
+
+### Subscription Support for HRV
+
+HRV does not support [subscription](/build/reference/web-api/developer-
+guide/using-subscriptions/) notifications (webhooks).
+Context number 16 (score: 0.784050465): 
+When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+## Additional Information
+
+### Sleep periods
+
+The value returned does not apply to a single date, necessarily, but to a
+measurement taken during a period of sleep. For most users, this will span two
+dates to account for Temperature (Skin) values on the date at which the
+summary was provided, as well as during the previous night’s sleep.
+
+### Collecting Temperature (Skin) data
+
+Temperature (Skin) data is collected when the user is in an extended period of
+sleep of at least 3 hours.
+
+There are many factors that can affect a user’s Temperature (Skin) value.
+Recording the data while a person is asleep allows the Fitbit device to
+correctly and accurately collect Temperature (Skin) data. Data is only
+processed when the user is still. If a user moves too much or their sleep
+session is too short, this can prevent Temperature (Skin) data from being
+processed correctly. In addition, if recorded data is incapable of computing
+specific sleep stages for a period of sleep, this will compromise the user’s
+ability to retrieve a Temperature (Skin) value.
+
+The device automatically stops collecting Temperature (Skin) data after it
+determines the user is awake, typically through physical movements. Once the
+user syncs their device, Temperature (Skin) data will begin processing for
+that sleep period. It usually takes up to 15 minutes for the data to be
+processed and made available to download.
+
+### Subscription Support for Temperature (Skin)
+
+Temperature (Skin) does not support [subscription](/build/reference/web-
+api/developer-guide/using-subscriptions/) notifications (webhooks).
+Context number 17 (score: 0.783474684): 
+**Response Codes**  
+200 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+* * *
+
+## Additional Information
+
+### Device support
+
+The Fitbit devices have the ability to set an alarm. Older devices whose
+alarms are configured in the mobile application support the create, delete,
+get and update alarm endpoints. Newer devices, listed in this help article
+<https://help.fitbit.com/articles/en_US/Help_article/1868.htm>, contain an on-
+device alarm application, and do not support the alarm endpoints. The alarms
+for these devices can only be set on the device itself.
+
+Setting an alarm without a recurring schedule is intended for next day
+purposes only.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/devices/delete-alarm/)
+
+[Delete Alarm](/build/reference/web-api/devices/delete-alarm/)
+
+[Get Devices](/build/reference/web-api/devices/get-devices/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/devices/get-devices/)
+Context number 18 (score: 0.782532632): 
+## Response
+
+  * Description
+  * Example Response
+
+Element Name | Description  
+|  
+goal : fat | The body fat goal to achieve.  
+      
+    
+    {
+      "goal": {
+        "fat": 25
+      }
+    }
+          
+
+  
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+
+**Response Type**  
+
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+201 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).
+
+  
+
+[Create Body Fat Log](/build/reference/web-api/body/create-bodyfat-log/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/body/create-bodyfat-log/)
+Context number 19 (score: 0.782387733): 
+As for custom activities on the website,
+manualCalories must always provided with the activityName parameter among
+other required fields.
+
+> **Note:** "Steps" may be used as a distanceUnits value when the activity is
+> either "Walking" (activityId=90013) or "Running" (activityId=90009) and
+> distance is only included when it is relevant.
+
+### Webhook notifications
+
+The Fitbit Web API can send notifications when a Fitbit user has new data to
+download. This is possible by implementing the Subscription API and
+subscribing to one or more data collections. See [ Using
+Subscriptions](/build/reference/web-api/developer-guide/using-subscriptions/).
+Whenever the activity service recognizes a change to the user’s data, a
+notification is sent to your application’s subscriber.
+
+The activity collection recognizes changes to a user’s recorded activities,
+step count, calories burned, distance traveled, etc. Keep in mind that even
+when a person is not in motion, their body is burning calories. It’s possible
+to receive activity notifications representing calorie burn even when the user
+is sleeping or stationary. Today, you cannot subscribe to a subset of the
+user’s activity data. So, it is the responsibility of your application to
+query the necessary activity endpoint(s) to reconcile the data in your system.
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/create-activity-goals/)
+
+[Create Activity Goal](/build/reference/web-api/activity/create-activity-
+goals/)
+
+[Create Favorite Activity](/build/reference/web-api/activity/create-favorite-
+activity/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/activity/create-favorite-activity/)
+Context number 20 (score: 0.781738877): 
+## Response
+
+A JSON response is not returned by this endpoint.
+
+**Response Headers**  
+content-type | The media type of the response content being sent to the client.  
+**Supported:** `application/json`  
+|  
+fitbit-rate-limit-limit | The quota number of calls.  
+fitbit-rate-limit-remaining | The number of calls remaining before hitting the rate limit.  
+fitbit-rate-limit-reset | The number of seconds until the rate limit resets.  
+  
+> **Note:** The rate limit headers are approximate and asynchronously updated.
+> This means that there may be a minor delay in the decrementing of remaining
+> requests. This could result in your application receiving an unexpected 429
+> response if you don't track the total number of requests you make yourself.
+
+  
+**Response Type**  
+HTTP Status Code | HTTP response code. List of codes are found in the [Troubleshooting Guide](/build/reference/web-api/troubleshooting-guide/error-messages/).  
+|  
+Status Message | Description of the status code.  
+Response Body | Contains the JSON response to the API call. When errors are returned by the API call, the errorType, fieldName and message text will provide more information to the cause of the failure.  
+  
+**Response Codes**  
+204 | A successful request.  
+|  
+400 | The request had bad syntax or was inherently impossible to be satisfied.  
+401 | The request requires user authentication.  
+  
+> **Note:** For a complete list of response codes, please refer to the
+> [Troubleshooting Guide](/build/reference/web-api/troubleshooting-
+> guide/error-messages/).  
+>
+
+[![previous](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/create-sleep-log/)
+
+[Create Sleep Log](/build/reference/web-api/sleep/create-sleep-log/)
+
+[Get Sleep Goal](/build/reference/web-api/sleep/get-sleep-goals/)
+
+[![next](/images/next-4a798552f1301bc41839afd0a22e5e82.svg)](/build/reference/web-
+api/sleep/get-sleep-goals/)
+---------------latest_code---------------
+
+Context number 1 (score: 0.838045895): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/goal.json  
+GET https://api.fitbit.com/1.2/user/GGNJL9/sleep/goal.json
+
+curl -X GET "https://api.fitbit.com/1.2/user/-/sleep/goal.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 2 (score: 0.835863054): 
+## Request
+
+GET |  /1.2/user/[user-id]/sleep/goal.json  
+---
+Context number 3 (score: 0.830808759): 
+## Request
+
+POST |  /1.2/user/[user-id]/sleep/goal.json  
+---
+Context number 4 (score: 0.830285192): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1.2/user/-/sleep/goal.json?minDuration=600  
+POST https://api.fitbit.com/1.2/user/GGNJL9/sleep/goal.json?minDuration=600
+
+curl -X POST
+"https://api.fitbit.com/1.2/user/-/sleep/goal.json?minDuration=600" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 5 (score: 0.824446619): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json  
+GET
+https://api.fitbit.com/1.2/user/GGNJL9/sleep/date/2020-01-01/2020-01-05.json
+
+curl -X GET
+"https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 6 (score: 0.82320708): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2020-05-01&sort=asc&offset=0&limit=1  
+GET
+https://api.fitbit.com/1.2/user/GGNJL9/sleep/list.json?afterDate=2020-05-01&sort=asc&offset=0&limit=1
+
+curl -X GET
+"https://api.fitbit.com/1.2/user/-/sleep/list.json?2020-05-01&sort=asc&offset=0&limit=1"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 7 (score: 0.819001555): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST
+https://api.fitbit.com/1.2/user/-/sleep.json?date=2020-02-09&startTime=22:00&duration=720000  
+POST
+https://api.fitbit.com/1.2/user/GGNJL9/sleep.json?date=2020-02-09&startTime=22:00&duration=720000
+
+curl -X POST
+"https://api.fitbit.com/1.2/user/-/sleep.json?date=2020-02-09&startTime=22:00&duration=720000"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 8 (score: 0.818331): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01.json  
+GET https://api.fitbit.com/1.2/user/GGNJL9/sleep/date/2020-01-01.json
+
+curl -X GET "https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 9 (score: 0.816269): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1/user/-/body/log/fat/goal.json?fat=16  
+POST https://api.fitbit.com/1/user/GGNJL9/body/log/fat/goal.json?fat=16  
+
+curl -X POST "https://api.fitbit.com/1/user/-/body/log/fat/goal.json?fat=16" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 10 (score: 0.812753499): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/body/log/weight/goal.json  
+GET https://api.fitbit.com/1/user/GGNJL9/body/log/weight/goal.json  
+
+curl -X GET "https://api.fitbit.com/1/user/-/body/log/weight/goal.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 11 (score: 0.812522769): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/activities/goals/daily.json  
+GET https://api.fitbit.com/1/user/GGNJL9/activities/goals/daily.json
+
+curl -X GET "https://api.fitbit.com/1/user/-/activities/goals/daily.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 12 (score: 0.811305523): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/foods/log/goal.json  
+GET https://api.fitbit.com/1/user/GGNJL9/foods/log/goal.json  
+
+curl -X GET "https://api.fitbit.com/1/user/-/foods/log/goal.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 13 (score: 0.81065464): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST
+https://api.fitbit.com/1/user/-/devices/tracker/755971717/alarms/1240569123.json?time=12:00-08:00&enabled=true&recurring=false&weekDays=WEDNESDAY&snoozeLength=5&snoozeCount=5  
+POST
+https://api.fitbit.com/1/user/GGNJL9/devices/tracker/755971717/alarms/1240569123.json?time=12:00-08:00&enabled=true&recurring=false&weekDays=WEDNESDAY&snoozeLength=5&snoozeCount=5
+
+curl -X POST
+"https://api.fitbit.com/1/user/-/devices/tracker/755971717/alarms/1240569123.json?time=12:00-08:00&enabled=true&recurring=false&weekDays=WEDNESDAY&snoozeLength=5&snoozeCount=5"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 14 (score: 0.8100335): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/apiSubscriptions.json  
+GET https://api.fitbit.com/1/user/-/activities/apiSubscriptions.json  
+GET https://api.fitbit.com/1/user/-/body/apiSubscriptions.json  
+GET https://api.fitbit.com/1/user/-/foods/apiSubscriptions.json  
+GET https://api.fitbit.com/1/user/GGNJL9/sleep/apiSubscriptions.json  
+GET
+https://api.fitbit.com/1/user/GGNJL9/userRevokedAccess/apiSubscriptions.json  
+
+curl -X GET "https://api.fitbit.com/1/user/-/apiSubscriptions.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>"  
+  
+curl -X GET
+"https://api.fitbit.com/1/user/GGNJL9/activities/apiSubscriptions.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 15 (score: 0.809177816): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET https://api.fitbit.com/1/user/-/foods/log/water/goal.json  
+GET https://api.fitbit.com/1/user/GGNJL9/foods/log/water/goal.json  
+
+curl -X GET "https://api.fitbit.com/1/user/-/foods/log/water/goal.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 16 (score: 0.808993): 
+**Examples**
+
+  * URL
+  * CURL
+
+GET
+[https://api.fitbit.com/1/user/-/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0](https://api.fitbit.com/1/user/-/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0)  
+GET
+[https://api.fitbit.com/1/user/GGNJL9/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0](https://api.fitbit.com/1/user/GGNJL9/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0)  
+
+curl -X GET
+"[https://api.fitbit.com/1/user/-/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0"](https://api.fitbit.com/1/user/-/irn/alerts/list.json?afterDate=2024-05-01&sort=asc&limit=1&offset=0")
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 17 (score: 0.808881462): 
+**Examples**
+
+  * URL
+  * CURL
+
+DELETE https://api.fitbit.com/1.2/user/-/sleep/3948582.json  
+DELETE https://api.fitbit.com/1.2/user/GGNJL9/sleep/3948582.json
+
+curl -X DELETE "https://api.fitbit.com/1.2/user/-/sleep/25793948582.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" 
+
+  
+
+* * *
+Context number 18 (score: 0.808089495): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1/user/-/apiSubscriptions/320.json  
+POST
+https://link>://api.fitbit.com/1/user/-/activities/apiSubscriptions/320json  
+POST https://api.fitbit.com/1/user/-/body/apiSubscriptions/320.json  
+POST https://api.fitbit.com/1/user/-/foods/apiSubscriptions/320.json  
+POST https://api.fitbit.com/1/user/GGNJL9/sleep/apiSubscriptions/320.json  
+POST
+https://api.fitbit.com/1/user/GGNJL9/userRevokedAccess/apiSubscriptions/320.json  
+
+curl -X POST "https://api.fitbit.com/1/user/-/apiSubscriptions/320.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>"   
+  
+curl -X POST
+"https://api.fitbit.com/1/user/-/activities/apiSubscriptions/320.json" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 19 (score: 0.807533): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST https://api.fitbit.com/1/user/-/foods/log/goal.json?calories=1800  
+POST https://api.fitbit.com/1/user/GGNJL9/foods/log/goal.json?calories=1800  
+
+curl -X POST
+"https://api.fitbit.com/1/user/-/foods/log/goal.json?calories=1800" \  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+Context number 20 (score: 0.807108819): 
+**Examples**
+
+  * URL
+  * CURL
+
+POST
+https://api.fitbit.com/1/user/-/devices/tracker/755971717/alarms.json?time=07:00-08:00&enabled=true&recurring=true&weekDays=MONDAY,TUESDAY  
+POST
+https://api.fitbit.com/1/user/GGNJL9/devices/tracker/755971717/alarms.json?time=07:00-08:00&enabled=true&recurring=true&weekDays=MONDAY,TUESDAY
+
+curl -X POST
+"https://api.fitbit.com/1/user/-/devices/tracker/755971717/alarms.json?time=07:00-08:00&enabled=true&recurring=true&weekDays=MONDAY,TUESDAY"
+\  
+-H "accept: application/json" \  
+-H "authorization: Bearer <access_token>" \  
+-H "content-length: <message_body_size>" 
+
+  
+
+* * *
+---------------outdated_natural_language---------------
+
+Context number 1 (score: 0.78304106): 
+Resource URL 
+ 
+ 
+ 
+       user-id   The encoded ID of
+    the user. Use "-" (dash) for current logged-in user.     
+ log-id   ID of the sleep log to be deleted.   
+   
+ Response 
+ A successful request will return a  204  status code with an empty response
+body. 
+ Sleep Time Series (Deprecated) 
+ Note:  This API has been deprecated with the introduction of version 1.2 of
+the Sleep APIs described above. Sleep Stages data cannot be retrieved with this
+API. If your application requires data consistency while you transition over to
+the version 1.2 Sleep APIs, you can get this data through the  version 1 Get
+Sleep Logs by Date
+endpoint . 
+ The  Get Sleep Time Series  endpoint returns time series data in the specified
+range for a given resource in the format requested using units in the  unit
+system  that corresponds to the Accept-Language
+header provided. 
+ Note:  Even if you provide earlier dates in the request, the response
+retrieves only data since the user's join date or the first log entry date for
+the requested collection. 
+ Resource URL 
+ There are two acceptable formats for retrieving intraday data: 
+ 
+ 
+ 
+       api-version   The API
+    version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+    user.       resource-path   The resource path; see
+    the  Resource Path Options  below for a list of options.     
+ date   The end date of the period specified in the format
+     yyyy-MM-dd  or  today .       period   The
+    range for which data will be returned. Options are  1d, 7d, 30d, 1w, 1m,
+    3m, 6m, 1y,  or  max.       
+ 
+ 
+ 
+       api-version   The API
+   version. Currently version  1 .       user-id 
+ The encoded ID of the user. Use "-" (dash) for current logged-in
+   user.       resource-path   The resource path; see
+   the  Resource Path Options  below for a list of options.     
+ base-date   The range start date, in the format  yyyy-MM-dd 
+   or  today .
+Context number 2 (score: 0.772584677): 
+Sleep Logs Version 1 (Deprecated) 
+ Overview 
+ These endpoints are deprecated and support for them may end unexpectedly. If
+your application does not depend on the sleep as calculated by these endpoints,
+please use the new  v1.2 sleep endpoints . 
+ 
+ Note : Version 1 APIs  do not  support Sleep Stages data 
+ 
+ Get Sleep Logs by Date 
+ The  Get Sleep Logs by Date  endpoint returns a summary and list of a user's
+sleep log entries (including naps) as well as detailed sleep entry data for a
+given day. 
+ The relationship between sleep log entry properties is expressed with the
+following equation: 
+ 
+ 
+ 
+ Resource URL 
+ 
+ 
+ 
+ URL parameters: 
+       user-id   The ID of the user.
+    Use "-" (dash) for current logged-in user.       date 
+ The date of records to be returned. In the format  yyyy-MM-dd . 
+     
+ Example Request 
+ 
+ 
+ 
+ Example Response 
+ Note:  The text within the brackets  <>  is a descriptive placeholder for a
+value or repeated elements. Also, values for  minuteData  can be  1 
+("asleep"),  2  ("restless"), or  3  ("awake"). 
+ 
+ 
+ 
+ Log Sleep 
+ The  Log Sleep  endpoint creates a log entry for a sleep event and returns a
+response in the format requested. Keep in mind that it is  NOT  possible to
+create overlapping log entries. The  dateOfSleep  in the response for the
+sleep log is the date on which the sleep event ends. 
+ Resource URL 
+ 
+ 
+ 
+       user-id   The ID of the user.
+    Use "-" (dash) for current logged-in user.       
+ POST Parameters 
+       startTime   required 
+ Start time; hours and minutes in the format  HH:mm .     
+ duration   required   Duration in
+    milliseconds.       date   required 
+ Log entry date in the format  yyyy-MM-dd .     
+ 
+ Example Request 
+ 
+ 
+ 
+ Example Response 
+ Note:  The text within the brackets  <>  is a descriptive placeholder for a
+value or repeated elements. 
+ 
+ 
+ 
+ Delete Sleep Log 
+ The  Delete Sleep Log  endpoint deletes a user's sleep log entry with the
+given ID. 
+ Resource URL 
+ 
+ 
+ 
+       user-id   The encoded ID of
+    the user. Use "-" (dash) for current logged-in user.
+Context number 3 (score: 0.712863803): 
+resource-path   The resource path; see
+   the  Resource Path Options  below for a list of options.     
+ base-date   The range start date, in the format  yyyy-MM-dd 
+   or  today .       end-date   The end date of the
+   range.       
+ Resource Path Options 
+ 
+ 
+ 
+ Example Requests 
+ 
+ 
+ 
+ Request Headers 
+       Accept-Language 
+ optional   The language to use for response values. Language is
+    used to determine the food measurement units returned.     
+ 
+     Partner Support
+---------------outdated_code---------------
+
+Context number 1 (score: 0.831684053): 
+GET https://api.fitbit.com/1/user/-/sleep/date/2014-09-01.json
+Context number 2 (score: 0.827851653): 
+GET https://api.fitbit.com/1/user/[user-id]/sleep/date/[date].json
+Context number 3 (score: 0.825343072): 
+POST https://api.fitbit.com/1/user/[user-id]/sleep.json
+Context number 4 (score: 0.825227559): 
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/today/2014-09-01.json
+GET https://api.fitbit.com/1/user/-/sleep/minutesAsleep/date/2014-09-01/today.json
+Context number 5 (score: 0.823760629): 
+POST https://api.fitbit.com/1/user/-/sleep.json?date=2017-03-27&startTime=19:55&duration=7200000
+Context number 6 (score: 0.810374081): 
+DELETE https://api.fitbit.com/1/user/[user-id]/sleep/[log-id].jso
+Context number 7 (score: 0.794824123): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[date]/[period].json
+Context number 8 (score: 0.793092191): 
+GET https://api.fitbit.com/1/user/[user-id]/[resource-path]/date/[base-date]/[end-date].json
+Context number 9 (score: 0.777172506): 
+{
+    "sleep": [
+        {
+            "isMainSleep": true,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T00:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>, // deprecated
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"00:00:00",
+                    "value":"3"
+                },
+                {
+                    "dateTime":"00:01:00",
+                    "value":"2"
+                },
+                {
+                    "dateTime":"00:02:00",
+                    "value":"1"
+                },
+                <...>
+            ]
+        },
+        {
+            "isMainSleep": false,
+            "logId":<value>,
+            "efficiency":<value>,
+            "startTime":"2011-06-16T14:00:00.000",
+            "duration":<value in milliseconds>,
+            "minutesToFallAsleep":<value>,
+            "minutesAsleep":<value>,
+            "minutesAwake":<value>,
+            "minutesAfterWakeup":<value>,
+            "awakeningsCount":<value>,
+            "awakeCount":<value>,
+            "awakeDuration":<value>,
+            "restlessCount":<value>,
+            "restlessDuration":<value>,
+            "timeInBed":<value in minutes>,
+            "minuteData":[
+                {
+                    "dateTime":"14:00:00",
+                    "value":"3"
+                },
+                <...>
+            ]
+        }
+    ],
+    "summary":{
+        "totalMinutesAsleep": <value>,
+        "totalSleepRecords": 2,
+        "totalTimeInBed": <value in minutes>
+    }
+}
+Context number 10 (score: 0.769717097): 
+{
+    "sleep": {
+        "awakeCount": 0,
+        "awakeDuration": 0,
+        "awakeningsCount": 0,
+        "dateOfSleep": "2017-03-28",
+        "duration": 7200000,
+        "efficiency": 100,
+        "isMainSleep": false,
+        "logId": 10183454484,
+        "minuteData": [
+            {
+                "dateTime": "02:32:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:33:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:34:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:35:00",
+                "value": "1"
+            },
+            {
+                "dateTime": "02:36:00",
+                "value": "1"
+            },
+            <...>
+        ],
+        "minutesAfterWakeup": 0,
+        "minutesAsleep": 120,
+        "minutesAwake": 0,
+        "minutesToFallAsleep": 0,
+        "restlessCount": 0,
+        "restlessDuration": 0,
+        "startTime": "2017-03-28T02:32:00.000",
+        "timeInBed": 120
+    }
+}
+Context number 11 (score: 0.75983876): 
+sleep/startTime
+sleep/timeInBed
+sleep/minutesAsleep
+sleep/awakeningsCount
+sleep/minutesAwake
+sleep/minutesToFallAsleep
+sleep/minutesAfterWakeup
+sleep/efficiency
+Context number 12 (score: 0.747539461): 
+timeInBed = minutesToFallAsleep + minutesAsleep + minutesAwake +
+ minutesAfterWakeup

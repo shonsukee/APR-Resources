@@ -1,0 +1,30 @@
+---------------User Query---------------
+{
+    "id": "56292336e4b0682904230a52",
+    "stateKey": "c19cb2bf-9303-4f97-8573-9182849d963c",
+    "username": "tp|0e5fab3f1a",
+    "redirectUri": "http://xx.xx.xx.xx:8083/authorize/fitbit/callback?state=c19cb2bf-9303-4f97-8573-9182849d963c",
+    "requestParams": {
+        "oauth_token": "699018ef6491ead4cadf682507bca5a0",
+        "oauth_token_secret": "6130fa167f49d2149cbec7d04cf14244"
+    },
+    "authorizationUrl": "https://www.fitbit.com/oauth/authenticate?oauth_consumer_key=1651ecdcf167d2a5928a5d243664f209&oauth_nonce=4705931066521466871&oauth_signature=3HaA0rk1cz5TgqxxRu0faHqVs44%3D&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1445536566&oauth_token=699018ef6491ead4cadf682507bca5a0&oauth_version=1.0",
+    "clientRedirectUrl": "oob",
+    "isAuthorized": false,
+    "serializedRequest": null
+}
+---------------Response---------------
+{
+    "id": "56292336e4b0682904230a52",
+    "stateKey": "c19cb2bf-9303-4f97-8573-9182849d963c",
+    "username": "tp|0e5fab3f1a",
+    "redirectUri": "http://xx.xx.xx.xx:8083/authorize/fitbit/callback?state=c19cb2bf-9303-4f97-8573-9182849d963c",
+    "requestParams": {
+        "oauth_token": "699018ef6491ead4cadf682507bca5a0",
+        "oauth_token_secret": "6130fa167f49d2149cbec7d04cf14244"
+    },
+    "authorizationUrl": "https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=1651ecdcf167d2a5928a5d243664f209&redirect_uri=http%3A%2F%2Fxx.xx.xx.xx%3A8083%2Fauthorize%2Ffitbit%2Fcallback&scope=activity%20nutrition%20heartrate%20location%20profile%20settings%20sleep%20social%20weight&state=c19cb2bf-9303-4f97-8573-9182849d963c",
+    "clientRedirectUrl": "oob",
+    "isAuthorized": false,
+    "serializedRequest": null
+}

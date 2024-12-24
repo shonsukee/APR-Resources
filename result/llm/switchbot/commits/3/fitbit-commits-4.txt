@@ -1,0 +1,114 @@
+---------------User Query---------------
+def main() -> None:
+    # True Min Run time should be the specified interval less the
+    # regular sleep time
+    real_min_run_time = MIN_RUN_TIME - SLEEP_TIME
+    url = f"https://api.switch-bot.com/v1.0/devices/{DEVID}/status"
+    headers = {'Authorization': APIKEY}
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN,
+                                   org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    logger.info(f"Startup: {UA_STRING}")
+    while True:
+        (deg_f, rel_hum) = read_sensor(url, headers)
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        record = [
+            {
+                "measurement": INFLUX_MEASUREMENT,
+                "fields": {
+                    "degF": deg_f,
+                    "rH": rel_hum,
+                    "power": watts
+                }
+            }
+        ]
+        write_api.write(bucket=INFLUX_BUCKET, record=record)
+        if rel_hum >= HIGH:
+            asyncio.run(plug_on(PLUG_IP))
+            logger.info(f"Change state to ON, rH: {rel_hum}")
+            # sleep for specified min run time, less standard sleep time,
+            # we will still perform that sleep later anyhow.
+            sleep(real_min_run_time)
+        elif rel_hum < LOW:
+            asyncio.run(plug_off(PLUG_IP))
+            logger.info(f"Change state to OFF, rH: {rel_hum}")
+        else:
+            pass
+        sleep(SLEEP_TIME)
+
+---------------Response---------------
+import asyncio
+import logging
+from time import sleep
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
+
+# 定数の定義
+MIN_RUN_TIME = 60  # 最小稼働時間（秒）
+SLEEP_TIME = 10    # スリープ時間（秒）
+HIGH = 70          # 高湿度の閾値
+LOW = 30           # 低湿度の閾値
+DEVID = 'your_device_id'
+APIKEY = 'your_api_key'
+INFLUX_URL = 'http://localhost:8086'
+INFLUX_TOKEN = 'your_influxdb_token'
+INFLUX_ORG = 'your_organization'
+INFLUX_BUCKET = 'your_bucket'
+INFLUX_MEASUREMENT = 'environment'
+PLUG_IP = 'your_plug_ip'
+UA_STRING = 'YourUserAgentString'
+
+# ロガーの設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+async def read_sensor(url: str, headers: dict) -> tuple:
+    # センサーから温度と湿度を取得する処理を実装
+    # ここにHTTPリクエストを送信してデータを取得するコードを追加
+    deg_f = 75.0  # 仮の温度データ
+    rel_hum = 50.0  # 仮の湿度データ
+    return deg_f, rel_hum
+
+async def read_consumption(plug_ip: str) -> float:
+    # プラグから消費電力を取得する処理を実装
+    # ここにプラグのAPIを呼び出してデータを取得するコードを追加
+    watts = 100.0  # 仮の消費電力データ
+    return watts
+
+async def plug_on(plug_ip: str) -> None:
+    # プラグをオンにする処理を実装
+    # ここにプラグのAPIを呼び出してオンにするコードを追加
+    pass
+
+async def plug_off(plug_ip: str) -> None:
+    # プラグをオフにする処理を実装
+    # ここにプラグのAPIを呼び出してオフにするコードを追加
+    pass
+
+def main() -> None:
+    real_min_run_time = MIN_RUN_TIME - SLEEP_TIME
+    url = f"https://api.switch-bot.com/v1.1/devices/{DEVID}/status"
+    headers = {'Authorization': APIKEY}
+    influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    logger.info(f"Startup: {UA_STRING}")
+    while True:
+        deg_f, rel_hum = asyncio.run(read_sensor(url, headers))
+        watts = asyncio.run(read_consumption(PLUG_IP))
+        point = Point(INFLUX_MEASUREMENT) \
+            .field("degF", deg_f) \
+            .field("rH", rel_hum) \
+            .field("power", watts) \
+            .time(time.time_ns(), WritePrecision.NS)
+        write_api.write(bucket=INFLUX_BUCKET, record=point)
+        if rel_hum >= HIGH:
+            asyncio.run(plug_on(PLUG_IP))
+            logger.info(f"Change state to ON, rH: {rel_hum}")
+            sleep(real_min_run_time)
+        elif rel_hum < LOW:
+            asyncio.run(plug_off(PLUG_IP))
+            logger.info(f"Change state to OFF, rH: {rel_hum}")
+        sleep(SLEEP_TIME)
+
+if __name__ == "__main__":
+    main()
